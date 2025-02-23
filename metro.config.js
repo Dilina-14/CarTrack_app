@@ -1,5 +1,7 @@
-module.exports = {
-  transformer: {
-    assetPlugins: ['react-native-svg-transformer'],
-  },
-};
+
+const { getDefaultConfig } = require('@react-native/metro-config');
+
+const config = getDefaultConfig(__dirname);
+
+module.exports = config;
+
