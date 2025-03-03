@@ -11,7 +11,7 @@ const Welcome = () => {
       <View style={styles.container}>
         <View>
           <TouchableOpacity style={styles.SignInButton}>
-            <Typo fontWeight={"500"}>BYE</Typo>
+            <Typo fontWeight={"500"}>Sign in</Typo>
           </TouchableOpacity>
 
           <Image source={require("../../assets/images/splashImage.png")}
