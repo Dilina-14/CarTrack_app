@@ -6,12 +6,12 @@ import { StatusBar } from "react-native";
 
 const SplashScreen = () => {
   const router = useRouter();
-  
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       router.push("/(auth)/welcome");
     }, 1500);
-    
+
     // Clean up the timeout to prevent memory leaks
     return () => clearTimeout(timeout);
   }, []);

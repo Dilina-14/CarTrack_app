@@ -1,22 +1,30 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
+import { useRouter } from "expo-router";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import Typo from "@/components/Typo";
 import { colors, spacingX } from "@/constants/theme";
 import { verticalScale } from "@/utils/styling";
 
 const Welcome = () => {
+  const router = useRouter();
+
   return (
     <ScreenWrapper>
       <View style={styles.container}>
         <View>
-          <TouchableOpacity style={styles.SignInButton}>
-            <Typo fontWeight={"500"}>BYE</Typo>
+          <TouchableOpacity
+            style={styles.SignInButton}
+            onPress={() => router.push("/(auth)/login")}
+          >
+            <Typo fontWeight={"500"}>Log In</Typo>
           </TouchableOpacity>
 
-          <Image source={require("../../assets/images/splashImage.png")}
-          style={styles.welcomeImage} 
-          resizeMode="contain"/>
+          <Image
+            source={require("../../assets/images/splashImage.png")}
+            style={styles.welcomeImage}
+            resizeMode="contain"
+          />
         </View>
       </View>
     </ScreenWrapper>
@@ -37,10 +45,9 @@ const styles = StyleSheet.create({
   },
 
   welcomeImage: {
-    width:"100%",
+    width: "100%",
     height: verticalScale(150),
-    alignSelf:"center",
-    marginTop:verticalScale(200)
-
-  }
+    alignSelf: "center",
+    marginTop: verticalScale(200),
+  },
 });
