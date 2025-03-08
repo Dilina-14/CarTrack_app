@@ -1,17 +1,24 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React from "react";
+import {useRouter} from "expo-router";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import Typo from "@/components/Typo";
 import { colors, spacingX } from "@/constants/theme";
 import { verticalScale } from "@/utils/styling";
 
+
+
 const Welcome = () => {
+  const router = useRouter();
   return (
     <ScreenWrapper>
       <View style={styles.container}>
         <View>
-          <TouchableOpacity style={styles.SignInButton}>
-            <Typo fontWeight={"500"}>Sign in</Typo>
+          <TouchableOpacity style={styles.SignInButton}
+           onPress={() => router.push("/(auth)/login")}>
+            
+            <Typo fontWeight={"500"}>log in</Typo>
+            
           </TouchableOpacity>
 
           <Image source={require("../../assets/images/splashImage.png")}
