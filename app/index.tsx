@@ -4,7 +4,9 @@ import { colors } from "@/constants/theme";
 import { useRouter } from "expo-router";
 import { StatusBar } from "react-native";
 
+
 const index = () => {
+  
   const router = useRouter();
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -13,6 +15,7 @@ const index = () => {
   }, []);
 
   return (
+    
     <View style={styles.container}>
       <StatusBar
         backgroundColor="black"

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "LastOne",
-    "slug": "LastOne",
+    "name": "CarTrack",
+    "slug": "CarTrack",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
