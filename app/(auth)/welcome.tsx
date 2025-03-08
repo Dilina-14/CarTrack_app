@@ -1,17 +1,25 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import Typo from "@/components/Typo";
 import { colors, spacingX } from "@/constants/theme";
 import { verticalScale } from "@/utils/styling";
+import { useRouter } from "expo-router";
 
 const Welcome = () => {
+  const router = useRouter();
+    useEffect(() => {
+      const timeout = setTimeout(() => {
+        router.push("/(tabs)");
+      }, 1500);
+    }, []);
+
   return (
     <ScreenWrapper>
       <View style={styles.container}>
         <View>
           <TouchableOpacity style={styles.SignInButton}>
-            <Typo fontWeight={"500"}>Sign Bye tessst</Typo>
+            <Typo fontWeight={"500"}>Sign In</Typo>
           </TouchableOpacity>
 
           <Image source={require("../../assets/images/splashImage.png")}
