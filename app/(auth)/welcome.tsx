@@ -7,6 +7,13 @@ import { colors, spacingX } from "@/constants/theme";
 import { verticalScale } from "@/utils/styling";
 
 const Welcome = () => {
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      router.push("/(tabs)");
+    }, 1500);
+  }, []);
+
+
   const router = useRouter();
 
   return (
