@@ -9,13 +9,6 @@ import { verticalScale } from "@/utils/styling";
 const Welcome = () => {
   const router = useRouter();
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      router.push("/(tabs)");
-    }, 1500);
-    return () => clearTimeout(timeout);
-  }, []);
-
   return (
     <ScreenWrapper>
       <View style={styles.container}>
