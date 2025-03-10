@@ -8,8 +8,7 @@ const styles = StyleSheet.create({
       padding: 24,
       backgroundColor: '#121212',
     },  
-    formContainer: {
-      
+    formContainer: {      
       backgroundColor: '#1E1E1E', 
       padding: 40,
       marginTop: -20,
@@ -19,7 +18,10 @@ const styles = StyleSheet.create({
       fontSize: 20,
       fontWeight: '700',
       color: '#fff',
-      marginBottom: 6,
+      marginBottom: 30,
+      marginTop: -40,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     subtitle: {
       fontSize: 15,
@@ -54,6 +56,8 @@ const styles = StyleSheet.create({
       fontWeight: '600',
       color: '#fff',
       textAlign: 'left',
+      marginBottom: 10, 
+      margintop: -15,
     },
     formFooter: {
       borderRadius: 30,
@@ -63,6 +67,7 @@ const styles = StyleSheet.create({
       color: '#fff',
       textAlign: 'center',
       letterSpacing: 0.15,
+      margintop: -15,
     },
     
     input: {
@@ -117,5 +122,7 @@ const styles = StyleSheet.create({
       fontWeight: '600',
       color: '#fff',
     },
+    googleButton: { marginTop: 10, backgroundColor: '#fff', padding: 12, borderRadius: 8, alignItems: 'center' },
+  googleButtonText: { color: '#333', fontSize: 16, fontWeight: '600' },
   });
   export default styles;

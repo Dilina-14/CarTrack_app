@@ -26,7 +26,7 @@ export default function login() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-
+ {/*
   const handleLogin = async () => {
     try {
       const response = await axios.post('https://your-backend-server.com/login', {
@@ -37,6 +37,7 @@ export default function login() {
       if (response.data.success) {
         // Navigate to the main app screen
         router.push('./main');
+       
       } else {
         setError('The email or password that you entered is incorrect');
       }
@@ -44,11 +45,11 @@ export default function login() {
       setError('The email or password that you entered is incorrect');
     }
   };
-
+  */}
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#e8ecf4' }}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "android" ? "padding" : "height"}
         style={{ flex: 1 }}>
       
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
@@ -58,19 +59,14 @@ export default function login() {
               
             <Image source={require("../../assets/images/logo.png")}
               style={styles.headerImg}
-              resizeMode="contain"/>
-
-            <Text style={styles.title}>
-                Log in to <Text style={{ color: '#C3FF65' }}>CarTrack</Text>
-            </Text>
-            
-            <Text style={styles.subtitle}>
-              One Stop for All Your Car Needs
-            </Text>
-
+              resizeMode="contain"/>       
             </View>
 
             <View style={styles.formContainer}>
+              <Text style={styles.title}>
+                  Log in 
+              </Text>
+
               <View style={styles.input}>
                 <Text style={styles.inputLabel}>Email address</Text>
                 <TextInput
@@ -111,11 +107,21 @@ export default function login() {
               <TouchableOpacity onPress={() => {}}>
                 <Text style={styles.formLink}>Forgot password?</Text>
               </TouchableOpacity>
-              <Text>/n</Text>
-              
+              <TouchableOpacity onPress={() => router.push("/(tabs)/addCost")}>
+                <Text>Go to Add Cost</Text>
+              </TouchableOpacity>
+             
+              {/*
               <View style={styles.formAction}>
                 <TouchableOpacity
                   onPress={handleLogin}>
+                  <View style={styles.btn}>
+                    <Text style={styles.btnText}>Log In</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>*/}
+              <View style={styles.formAction}>
+                <TouchableOpacity onPress={() => router.push("/(tabs)")}>
                   <View style={styles.btn}>
                     <Text style={styles.btnText}>Log In</Text>
                   </View>
@@ -128,6 +134,7 @@ export default function login() {
                   <Text style={{ textDecorationLine: 'underline' }}>Sign up</Text>
                 </Text>
               </TouchableOpacity>
+              
             </View>
           </View>
         </ScrollView>
