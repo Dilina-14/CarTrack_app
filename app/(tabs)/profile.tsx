@@ -1,28 +1,9 @@
-<<<<<<< Updated upstream
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import ScreenWrapper from '@/components/ScreenWrapper'
-=======
 import { Image, StyleSheet, Text, TouchableOpacity, View, Dimensions, SafeAreaView, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { colors, spacingX } from "@/constants/theme";
 import { useRouter } from "expo-router";
->>>>>>> Stashed changes
 
-const Profile = () => {
-  return (
-    <ScreenWrapper>
-      <Text>Profile</Text>
-    </ScreenWrapper>
-  )
-}
-
-<<<<<<< Updated upstream
-export default Profile
-
-const styles = StyleSheet.create({})
-=======
 const profile = () => {
     const router = useRouter();
     const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
@@ -82,17 +63,26 @@ const profile = () => {
                             <Text style={[styles.menuText, { fontSize: fontSize }]}>Reminders</Text>
                         </TouchableOpacity>
                         
-                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} onPress={() => router.push("/(profile)/subscription")}>
+                        <TouchableOpacity 
+                            style={[styles.menuItem, { width: menuWidth }]} 
+                            onPress={() => router.push("/(profile)/subscription")}
+                        >
                             <Image source={require('../../assets/images/premium-icon.png')} />
                             <Text style={[styles.menuText, { fontSize: fontSize }]}>Premium</Text>
                         </TouchableOpacity>
                         
-                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} onPress={() => router.push("/(profile)/help-and-support")}>
+                        <TouchableOpacity 
+                            style={[styles.menuItem, { width: menuWidth }]} 
+                            onPress={() => router.push("/(profile)/help-and-support")}
+                        >
                             <Image source={require('../../assets/images/Help-and-support-icon.png')} />
                             <Text style={[styles.menuText, { fontSize: fontSize }]}>Help & Support</Text>
                         </TouchableOpacity>
                         
-                        <TouchableOpacity style={[styles.deleteItem, { width: menuWidth }]} onPress={() => router.push("/(auth)/login")}>
+                        <TouchableOpacity 
+                            style={[styles.deleteItem, { width: menuWidth }]} 
+                            onPress={() => router.push("/(auth)/login")}
+                        >
                             <Image source={require('../../assets/images/delete-icon.png')} />
                             <Text style={[styles.deleteText, { fontSize: fontSize }]}>Delete Profile</Text>
                         </TouchableOpacity>
@@ -166,8 +156,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#1E1E1E',
-        paddingVertical: 15,
         paddingHorizontal: 20,
+        paddingVertical: 15,
         borderRadius: 25,
         height: 61,
         marginBottom: 14,
@@ -186,8 +176,8 @@ const styles = StyleSheet.create({
         paddingVertical: 15,
         width: '100%', 
         position: 'absolute', 
-        bottom: 0, 
-    },      
+        bottom: 0,
+    },
     tabItem: {
         alignItems: 'center',
         justifyContent: 'center',
@@ -199,4 +189,3 @@ const styles = StyleSheet.create({
         paddingTop: 13,
     },
 });
->>>>>>> Stashed changes
