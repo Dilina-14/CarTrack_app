@@ -1,15 +1,21 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const AddCost = () => {
   const [category, setCategory] = useState("");
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [dateBorderColor, setDateBorderColor] = useState("#FFF");
   const [amountBorderColor, setAmountBorderColor] = useState("#FFF");
   const [noteBorderColor, setNoteBorderColor] = useState("#FFF");
 
-  // Get today's date in YYYY-MM-DD format
-  const today = new Date().toISOString().split('T')[0];
+  const handleDateChange = (event: any, selectedDate: Date | undefined) => {
+    const currentDate = selectedDate || date;
+    setShowDatePicker(false);
+    setDate(currentDate);
+  };
 
   return (
     <View style={styles.container}>
@@ -19,14 +25,28 @@ const AddCost = () => {
         {/* Date Input */}
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Date</Text>
-          <TextInput
-            style={[styles.input, { borderColor: dateBorderColor }]}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor="#777"
-            value={today}
-            onFocus={() => setDateBorderColor("#C3FF65")}
-            onBlur={() => setDateBorderColor("#FFF")}
-          />
+          <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+            <TextInput
+              style={[styles.input, { borderColor: dateBorderColor }]}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor="#777"
+              value={date.toISOString().split('T')[0]}
+              editable={false}
+              onFocus={() => setDateBorderColor("#C3FF65")}
+              onBlur={() => setDateBorderColor("#FFF")}
+            />
+          </TouchableOpacity>
+          {showDatePicker && (
+            <View style={styles.datePickerContainer}>
+              <DateTimePicker
+                value={date}
+                mode="date"
+                display="spinner"
+                onChange={handleDateChange}
+                textColor="#FFF" // Set text color to white
+              />
+            </View>
+          )}
         </View>
 
         {/* Amount Input */}
@@ -65,7 +85,7 @@ const AddCost = () => {
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Note</Text>
           <TextInput
-            style={[styles.input, { borderColor: noteBorderColor}]} // Increased height
+            style={[styles.input, { borderColor: noteBorderColor, }]} // Increased height
             placeholder="Enter note"
             placeholderTextColor="#777"
             multiline
@@ -123,10 +143,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
   },
-  pickerItem: {
+  datePickerContainer: {
     backgroundColor: "#1E1E1E",
-    color: "#1E1E1E",
-    borderRadius: 25,
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  pickerItem: { 
+    backgroundColor: "#1E1E1E", 
+    color: "#1E1E1E", 
+    borderRadius: 25, 
   },
   buttonContainer: {
     flexDirection: "row",
