@@ -1,21 +1,22 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import React, { useEffect } from "react";
 import { colors } from "@/constants/theme";
 import { useRouter } from "expo-router";
 import { StatusBar } from "react-native";
 
-
-const index = () => {
-  
+const SplashScreen = () => {
   const router = useRouter();
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       router.push("/(auth)/welcome");
     }, 1500);
+
+    // Clean up the timeout to prevent memory leaks
+    return () => clearTimeout(timeout);
   }, []);
 
   return (
-    
     <View style={styles.container}>
       <StatusBar
         backgroundColor="black"
@@ -31,7 +32,7 @@ const index = () => {
   );
 };
 
-export default index;
+export default SplashScreen;
 
 const styles = StyleSheet.create({
   container: {

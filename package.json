@@ -28,6 +28,8 @@
     "expo-constants": "~17.0.7",
     "expo-font": "~13.0.4",
     "expo-haptics": "~14.0.1",
+    "expo-image-picker": "~16.0.6",
+    "expo-linear-gradient": "~14.0.2",
     "expo-linking": "~7.0.5",
     "expo-router": "~4.0.17",
     "expo-splash-screen": "~0.29.22",
@@ -36,6 +38,7 @@
     "expo-system-ui": "~4.0.8",
     "expo-web-browser": "~14.0.2",
     "firebase": "^11.4.0",
+    "lucide-react-native": "^0.477.0",
     "nativewind": "^4.1.23",
     "phosphor-react-native": "^2.3.1",
     "react": "18.3.1",
@@ -52,8 +55,9 @@
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
+    "tailwind-rn": "^4.2.0",
     "tailwindcss": "^3.4.17",
-    "undefined": "expo-auth-session/providers/google"
+    "expo-auth-session/providers/google": "latest"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

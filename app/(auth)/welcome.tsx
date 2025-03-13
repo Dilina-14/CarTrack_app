@@ -7,14 +7,14 @@ import { colors, spacingX } from "@/constants/theme";
 import { verticalScale } from "@/utils/styling";
 
 const Welcome = () => {
-  const router = useRouter();
-
   useEffect(() => {
     const timeout = setTimeout(() => {
       router.push("/(tabs)");
     }, 1500);
-    return () => clearTimeout(timeout);
   }, []);
+
+
+  const router = useRouter();
 
   return (
     <ScreenWrapper>
