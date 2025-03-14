@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
     },  
     formContainer: {      
       backgroundColor: '#1E1E1E', 
-      padding: 40,
+      padding: 25,
       marginTop: -20,
       borderRadius: 30, 
     },
@@ -18,8 +18,7 @@ const styles = StyleSheet.create({
       fontSize: 20,
       fontWeight: '700',
       color: '#fff',
-      marginBottom: 30,
-      marginTop: -40,
+      marginBottom: 20,
       alignItems: 'center',
       justifyContent: 'center',
     },

@@ -11,12 +11,104 @@ import {
   ShoppingCart,
   Newspaper,
   BookOpen,
+  Receipt,
+  Car,
+  GasPump,
+  FileText
 } from "phosphor-react-native";
 import { colors } from "@/constants/theme";
 import { router } from "expo-router";
 
+// Expense 
+const ExpenseList = () => {
+  
+  const expenseItems = [
+    {
+      id: '1',
+      title: 'Vehicle Insurance',
+      description: 'Description',
+      amount: 'LKR.4200.00',
+      iconName: 'FileText',
+      bgColor: '#2E90FA',
+    },
+    {
+      id: '2',
+      title: 'Vehicle Management',
+      description: 'Brake pad check',
+      amount: 'LKR.400.00',
+      iconName: 'Car',
+      bgColor: '#C6FF66',
+    },
+    {
+      id: '3',
+      title: 'Fuel',
+      description: 'Ioc Shed',
+      amount: 'LKR.6000.00',
+      iconName: 'Gas',
+      bgColor: '#F04438',
+    },
+    {
+      id: '4',
+      title: 'Vehicle Management',
+      description: 'Brake pad check',
+      amount: 'LKR.400.00',
+      iconName: 'Car',
+      bgColor: '#C6FF66',
+    },
+    {
+      id: '5',
+      title: 'Vehicle Insurance',
+      description: 'Description',
+      amount: 'LKR.4200.00',
+      iconName: 'FileText',
+      bgColor: '#2E90FA',
+    },
+    
+  ];
+
+  
+  const renderIcon = (iconName: string, color: string) => {
+    switch(iconName) {
+      case 'FileText':
+        return <FileText size={32} color="white" weight="duotone" />;
+      case 'Car':
+        return <Car size={32} color="white" weight="duotone" />;
+      case 'Gas':
+        return <GasPump size={32} color="white" weight="duotone" />;
+      default:
+        return <FileText size={32} color="white" weight="duotone" />;
+    }
+  };
+
+  return (
+    <View style={styles.expenseListContainer}>
+      <ScrollView 
+        style={styles.expenseScrollView}
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
+        contentContainerStyle={styles.expenseScrollContent}
+      >
+        {[...expenseItems].reverse().map((item) => (
+          <View key={item.id} style={styles.expenseItem}>
+            <View style={styles.expenseIconSection}>
+              <View style={[styles.expenseIconBg, { backgroundColor: item.bgColor }]}>
+                {renderIcon(item.iconName, 'white')}
+              </View>
+              <View style={styles.expenseDetails}>
+                <Text style={styles.expenseTitle}>{item.title}</Text>
+                <Text style={styles.expenseDescription}>{item.description}</Text>
+              </View>
+            </View>
+            <Text style={styles.expenseAmount}>{item.amount}</Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
 const ExpenseGraph = () => {
-  // Sample data for the graph
+  
   const barData = [
     { value: 15.3, key: "1" },
     { value: 17.8, key: "2" },
@@ -33,7 +125,7 @@ const ExpenseGraph = () => {
     <View style={styles.graphContainer}>
       <Text style={styles.graphTitle}>Fuel Expense</Text>
 
-      {/* Graph/Chart */}
+      {/* Graph */}
       <View style={styles.chartArea}>
         <View style={styles.yAxisLabels}>
           <Text style={styles.axisLabel}>23.1k</Text>
@@ -127,6 +219,9 @@ const index = () => {
         </ScrollView>
 
         <ExpenseGraph />
+
+        <ExpenseList />
+
       </ScrollView>
     </View>
   );
@@ -164,14 +259,15 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  // Graph styles
+  // Graph 
   graphContainer: {
     marginHorizontal: 20,
-    marginTop: 15,
+    marginTop: 10,
     backgroundColor: "#1E1E1E",
     borderRadius: 20,
     padding: 20,
     paddingBottom: 15,
+    marginBottom:15
   },
   graphTitle: {
     color: "white",
@@ -239,6 +335,59 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
   },
+
+  //exp
+  expenseListContainer: {
+    marginHorizontal: 20,
+    height: 400, // Fixed height for the scrollable container
+  },
+  expenseScrollView: {
+    flex: 1,
+  },
+  expenseScrollContent: {
+    paddingVertical: 5,
+  },
+  expenseItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 15,
+    backgroundColor: '#1E1E1E',
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  expenseIconSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  expenseIconBg: {
+    width: 55,
+    height: 55,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expenseDetails: {
+    marginLeft: 15,
+  },
+  expenseTitle: {
+    color: 'white',
+    fontSize: 15,
+    width:"75%",
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  expenseDescription: {
+    color: '#888',
+    fontSize: 14,
+  },
+  expenseAmount: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+
 });
 
 export default index;
