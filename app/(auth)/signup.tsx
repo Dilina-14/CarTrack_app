@@ -82,18 +82,13 @@ export default function signup() {
               
               <Image source={require("../../assets/images/logo.png")}
                 style={styles.headerImg}
-                resizeMode="contain"/>
-
-              <Text style={styles.title}>
-                Sign up for <Text style={{ color: '#C3FF65' }}>CarTrack</Text>
-              </Text>
-
-              <Text style={styles.subtitle}>
-                All your car care needs under one roof
-              </Text>
+                resizeMode="contain"/>              
             </View>
 
             <View style={styles.formContainer}>
+              <Text style={styles.title}>
+                  Sign up 
+              </Text>
               <View style={styles.input}>
                 <Text style={styles.inputLabel}>Email address</Text>
                 <TextInput
