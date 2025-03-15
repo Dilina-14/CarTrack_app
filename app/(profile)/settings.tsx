@@ -45,7 +45,7 @@ const settings = () => {
                                 <Text style={[styles.menuText, { fontSize: fontSize }]}>Notification</Text>
                             </View>
                             <Switch
-                                trackColor={{ false: "#767577", true: "#4CAF50" }}
+                                trackColor={{ false: "#767577", true: "#C6FF66" }}
                                 thumbColor={notificationsEnabled ? "#f4f3f4" : "#f4f3f4"}
                                 ios_backgroundColor="#3e3e3e"
                                 onValueChange={toggleSwitch}
@@ -59,7 +59,7 @@ const settings = () => {
                             />
                         </View>
                         
-                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]}>
+                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} onPress={() => router.push("/(MainScreens)/marketplace-display")}>
                             <View style={styles.iconTextContainer}>
                                 <Ionicons name="share-social-outline" size={24} color="white" />
                                 <Text style={[styles.menuText, { fontSize: fontSize }]}>Share App</Text>
