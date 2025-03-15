@@ -26,7 +26,7 @@ export default function CustomTabs({
         ),
         
         news: (isFocused : boolean) => (
-            <Icons.Book
+            <Icons.Newspaper
                 size={verticalScale(30)}
                 weight={isFocused? "fill" : "regular" }
                 color={isFocused? colors.primary : colors.white }

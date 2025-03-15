@@ -107,9 +107,7 @@ export default function login() {
               <TouchableOpacity onPress={() => {}}>
                 <Text style={styles.formLink}>Forgot password?</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push("/(MainScreens)/addCost")}>
-                <Text>Go to Add Cost</Text>
-              </TouchableOpacity>
+
              
               {/*
               <View style={styles.formAction}>
