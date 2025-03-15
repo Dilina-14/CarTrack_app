@@ -60,7 +60,7 @@ const profile = () => {
                       
                       <TouchableOpacity 
                           style={[styles.menuItem, { width: menuWidth }]}
-                          onPress={() => router.push('/reminders')} // Keep feature from apurva-reminders branch
+                          onPress={() => router.push('../other/reminders')} // Keep feature from apurva-reminders branch
                       >
                           <Image source={require('../../assets/images/reminders-icon.png')} />
                           <Text style={[styles.menuText, { fontSize: fontSize }]}>Reminders</Text>
