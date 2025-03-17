@@ -2,20 +2,7 @@ import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, SafeAreaVi
 import React from 'react';
 import ScreenWrapper from '@/components/ScreenWrapper';
 import { Feather } from '@expo/vector-icons';
-import { NavigationProp, useNavigation } from '@react-navigation/native';
-
-// Define the type for navigation stack
-type RootStackParamList = {
-  NewsDetail: {
-    newsId: string;
-    title: string;
-    date: string;
-    author: string;
-    distance?: string;
-    imageUri: string;
-  };
-  AddNews: undefined;
-};
+import { useRouter } from "expo-router";
 
 // Define the type for the news item
 type NewsItemProps = {
@@ -28,16 +15,13 @@ type NewsItemProps = {
 };
 
 const NewsCard = ({ title, date, author, distance, imageUri, newsId }: NewsItemProps) => {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const router = useRouter();
 
   const handleNewsPress = () => {
-    navigation.navigate('NewsDetail', {
-      newsId,
-      title,
-      date,
-      author,
-      distance,
-      imageUri,
+    // Navigate to the news detail screen with the news ID
+    router.push({
+      pathname: "/(news)/newsdetail",
+      params: { id: newsId }
     });
   };
 
@@ -62,11 +46,7 @@ const NewsCard = ({ title, date, author, distance, imageUri, newsId }: NewsItemP
 };
 
 const News = () => {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-
-  const handleAddNews = () => {
-    navigation.navigate('AddNews');
-  };
+  const router = useRouter();
 
   return (
     <ScreenWrapper>
@@ -96,7 +76,7 @@ const News = () => {
         </ScrollView>
 
         {/* Floating Action Button */}
-        <TouchableOpacity style={styles.fab} onPress={handleAddNews}>
+        <TouchableOpacity style={styles.fab} onPress={() => router.push("/(news)/addnews")}>
           <Feather name="plus" size={24} color="white" />
         </TouchableOpacity>
       </SafeAreaView>
