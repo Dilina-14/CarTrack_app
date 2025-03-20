@@ -9,7 +9,7 @@ const SplashScreen = () => {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      router.push("/(auth)/welcome");
+      router.push("/(auth)/login");
     }, 1500);
 
     // Clean up the timeout to prevent memory leaks

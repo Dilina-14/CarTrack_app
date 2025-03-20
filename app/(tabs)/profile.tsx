@@ -5,92 +5,95 @@ import { colors, spacingX } from "@/constants/theme";
 import { useRouter } from "expo-router";
 
 const profile = () => {
-    const router = useRouter();
-    const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
-    const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
+  const router = useRouter();
+  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
 
-    // Update dimensions on orientation changes
-    useEffect(() => {
-        const subscription = Dimensions.addEventListener('change', ({ window }) => {
-            setScreenWidth(window.width);
-            setScreenHeight(window.height);
-        });
-        return () => subscription?.remove();
-    }, []);
+  // Update dimensions on orientation changes
+  useEffect(() => {
+      const subscription = Dimensions.addEventListener('change', ({ window }) => {
+          setScreenWidth(window.width);
+          setScreenHeight(window.height);
+      });
+      return () => subscription?.remove();
+  }, []);
 
-    // Calculate responsive values
-    const avatarSize = screenWidth * 0.4 > 200 ? 200 : screenWidth * 0.4;
-    const menuWidth = screenWidth * 0.9 > 368 ? 368 : screenWidth * 0.9;
-    const fontSize = screenWidth * 0.04 > 16 ? 16 : screenWidth * 0.04;
-    const headerFontSize = screenWidth * 0.07 > 30 ? 30 : screenWidth * 0.07;
-    
-    return (
-        <ScreenWrapper>
-            <SafeAreaView style={styles.container}>
-                <ScrollView 
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ paddingBottom: 100 }}
-                >
-                    <View style={styles.profileInfo}>
-                        <View style={[styles.avatarContainer, { width: avatarSize, height: avatarSize }]}>
-                            <Image 
-                                source={require('../../assets/images/avatar.png')} 
-                                style={[styles.avatar, { width: avatarSize, height: avatarSize }]}
-                            />
-                        </View>
-                        <Text style={[styles.userName, { fontSize: headerFontSize }]}>Vidusha.W</Text>
+  // Calculate responsive values
+  const avatarSize = screenWidth * 0.4 > 200 ? 200 : screenWidth * 0.4;
+  const menuWidth = screenWidth * 0.9 > 368 ? 368 : screenWidth * 0.9;
+  const fontSize = screenWidth * 0.04 > 16 ? 16 : screenWidth * 0.04;
+  const headerFontSize = screenWidth * 0.07 > 30 ? 30 : screenWidth * 0.07;
+  
+  return (
+      <ScreenWrapper>
+          <SafeAreaView style={styles.container}>
+              <ScrollView 
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{ paddingBottom: 100 }}
+              >
+                  <View style={styles.profileInfo}>
+                      <View style={[styles.avatarContainer, { width: avatarSize, height: avatarSize }]}>
+                          <Image 
+                              source={require('../../assets/images/avatar.png')} 
+                              style={[styles.avatar, { width: avatarSize, height: avatarSize }]}
+                          />
+                      </View>
+                      <Text style={[styles.userName, { fontSize: headerFontSize }]}>Vidusha.W</Text>
 
-                        <View style={styles.verifiedContainer}>
-                            <Image 
-                                source={require('../../assets/images/verify-icon.png')} 
-                                style={styles.verifyIcon}
-                            />
-                            <Text style={[styles.verifiedText, { fontSize: fontSize * 0.9 }]}>Verified</Text>
-                        </View>
-                    </View>
+                      <View style={styles.verifiedContainer}>
+                          <Image 
+                              source={require('../../assets/images/verify-icon.png')} 
+                              style={styles.verifyIcon}
+                          />
+                          <Text style={[styles.verifiedText, { fontSize: fontSize * 0.9 }]}>Verified</Text>
+                      </View>
+                  </View>
 
-                    <View style={styles.menuOptions}>
-                        <TouchableOpacity 
-                            style={[styles.menuItem, { width: menuWidth }]} 
-                            onPress={() => router.push("/(profile)/settings")}
-                        >
-                            <Image source={require('../../assets/images/settings-icon.png')} />
-                            <Text style={[styles.menuText, { fontSize: fontSize }]}>Settings</Text>
-                        </TouchableOpacity>
-                        
-                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]}>
-                            <Image source={require('../../assets/images/reminders-icon.png')} />
-                            <Text style={[styles.menuText, { fontSize: fontSize }]}>Reminders</Text>
-                        </TouchableOpacity>
-                        
-                        <TouchableOpacity 
-                            style={[styles.menuItem, { width: menuWidth }]} 
-                            onPress={() => router.push("/(profile)/subscription")}
-                        >
-                            <Image source={require('../../assets/images/premium-icon.png')} />
-                            <Text style={[styles.menuText, { fontSize: fontSize }]}>Premium</Text>
-                        </TouchableOpacity>
-                        
-                        <TouchableOpacity 
-                            style={[styles.menuItem, { width: menuWidth }]} 
-                            onPress={() => router.push("/(profile)/help-and-support")}
-                        >
-                            <Image source={require('../../assets/images/Help-and-support-icon.png')} />
-                            <Text style={[styles.menuText, { fontSize: fontSize }]}>Help & Support</Text>
-                        </TouchableOpacity>
-                        
-                        <TouchableOpacity 
-                            style={[styles.deleteItem, { width: menuWidth }]} 
-                            onPress={() => router.push("/(auth)/login")}
-                        >
-                            <Image source={require('../../assets/images/delete-icon.png')} />
-                            <Text style={[styles.deleteText, { fontSize: fontSize }]}>Delete Profile</Text>
-                        </TouchableOpacity>
-                    </View>
-                </ScrollView>
-            </SafeAreaView>
-        </ScreenWrapper>
-    );
+                  <View style={styles.menuOptions}>
+                      <TouchableOpacity 
+                          style={[styles.menuItem, { width: menuWidth }]} 
+                          onPress={() => router.push("/(profile)/settings")}
+                      >
+                          <Image source={require('../../assets/images/settings-icon.png')} />
+                          <Text style={[styles.menuText, { fontSize: fontSize }]}>Settings</Text>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity 
+                          style={[styles.menuItem, { width: menuWidth }]}
+                          onPress={() => router.push('../other/reminders')} // Keep feature from apurva-reminders branch
+                      >
+                          <Image source={require('../../assets/images/reminders-icon.png')} />
+                          <Text style={[styles.menuText, { fontSize: fontSize }]}>Reminders</Text>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity 
+                          style={[styles.menuItem, { width: menuWidth }]} 
+                          onPress={() => router.push("/(profile)/subscription")}
+                      >
+                          <Image source={require('../../assets/images/premium-icon.png')} />
+                          <Text style={[styles.menuText, { fontSize: fontSize }]}>Premium</Text>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity 
+                          style={[styles.menuItem, { width: menuWidth }]} 
+                          onPress={() => router.push("/(profile)/help-and-support")}
+                      >
+                          <Image source={require('../../assets/images/Help-and-support-icon.png')} />
+                          <Text style={[styles.menuText, { fontSize: fontSize }]}>Help & Support</Text>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity 
+                          style={[styles.deleteItem, { width: menuWidth }]} 
+                          onPress={() => router.push("/(auth)/login")}
+                      >
+                          <Image source={require('../../assets/images/delete-icon.png')} />
+                          <Text style={[styles.deleteText, { fontSize: fontSize }]}>Delete Profile</Text>
+                      </TouchableOpacity>
+                  </View>
+              </ScrollView>
+          </SafeAreaView>
+      </ScreenWrapper>
+  );
 };
 
 export default profile;

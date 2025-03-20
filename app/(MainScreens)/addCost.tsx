@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { router } from "expo-router";
 
 const AddCost = () => {
   const [category, setCategory] = useState("");
@@ -97,7 +98,7 @@ const AddCost = () => {
 
       {/* Buttons */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.cancelButton}>
+        <TouchableOpacity onPress={() => router.push("/(tabs)")} style={styles.cancelButton}>
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.saveButton}>
