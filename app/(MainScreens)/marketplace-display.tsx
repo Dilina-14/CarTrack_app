@@ -68,7 +68,7 @@ const MarketplaceDisplay = () => {
         engineCapacity: "2500 cc",
         mileage: "205,000 km",
         isVerified: true,
-        contactNumber: "+94 712 567 876",
+        contactNumber: "+94 766 366 760",
         // Using the same image for demo purposes, replace with actual different images
         images: [
             require('@/assets/images/marketplace-display/vehicle-image-1.jpg'),

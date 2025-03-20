@@ -109,7 +109,6 @@ export default News;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 70,
     backgroundColor: '#121212',
   },
   header: {
