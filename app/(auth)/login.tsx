@@ -26,26 +26,63 @@ export default function login() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
- {/*
+ 
   const handleLogin = async () => {
-    try {
-      const response = await axios.post('https://your-backend-server.com/login', {
+    // Reset previous error
+    setError('');
+    
+    // Validate email and password
+    if (!form.email || !form.password) {
+      setError('Please enter both email and password');
+      Alert.alert('Error', 'Please enter both email and password');
+      return;
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      setError('Please enter a valid email address');
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    // Minimum password length validation
+    if (form.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+  
+    try { 
+      // Call the login API
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
         email: form.email,
         password: form.password,
       });
-
-      if (response.data.success) {
-        // Navigate to the main app screen
-        router.push('./main');
-       
-      } else {
-        setError('The email or password that you entered is incorrect');
-      }
+  
+      // If login is successful, show a success message
+      Alert.alert('Success', 'Login successful!');
+      console.log('User:', response.data.user);
+  
+      // Navigate to the next screen
+      router.push('/(tabs)');
     } catch (error) {
-      setError('The email or password that you entered is incorrect');
+      console.error('Login error:', error);
+      
+      // Handle network errors
+      if ((error as any).message && (error as any).message.includes('Network Error')) {
+        Alert.alert(
+          'Connection Error',
+          'Could not connect to the server. Please check your connection or try again later.'
+        );
+      } else {
+        // Regular authentication error
+        setError('Invalid email or password');
+        Alert.alert('Error', 'Invalid email or password');
+      }
     }
   };
-  */}
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#e8ecf4' }}>
       <KeyboardAvoidingView
@@ -104,22 +141,18 @@ export default function login() {
                 </View>
               </View>
 
+              {error ? (
+                <Text style={{ color: 'red', marginTop: 4, marginBottom: 4 }}>
+                  {error}
+                </Text>
+              ) : null}
+
               <TouchableOpacity onPress={() => {}}>
                 <Text style={styles.formLink}>Forgot password?</Text>
               </TouchableOpacity>
 
-             
-              {/*
               <View style={styles.formAction}>
-                <TouchableOpacity
-                  onPress={handleLogin}>
-                  <View style={styles.btn}>
-                    <Text style={styles.btnText}>Log In</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>*/}
-              <View style={styles.formAction}>
-                <TouchableOpacity onPress={() => router.push("/(tabs)")}>
+                <TouchableOpacity onPress={handleLogin}>
                   <View style={styles.btn}>
                     <Text style={styles.btnText}>Log In</Text>
                   </View>
