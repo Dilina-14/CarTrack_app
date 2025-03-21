@@ -46,7 +46,7 @@ const settings = () => {
                                 <Text style={[styles.menuText, { fontSize: fontSize }]}>Notification</Text>
                             </View>
                             <Switch
-                                trackColor={{ false: "#767577", true: "#4CAF50" }}
+                                trackColor={{ false: "#767577", true: "#C6FF66" }}
                                 thumbColor={notificationsEnabled ? "#f4f3f4" : "#f4f3f4"}
                                 ios_backgroundColor="#3e3e3e"
                                 onValueChange={toggleSwitch}
@@ -60,11 +60,13 @@ const settings = () => {
                             />
                         </View>
                         
-<<<<<<< Updated upstream
+
                         <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]}>
-=======
+
                         <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} onPress={() => Linking.openURL("https://www.cartrackapp.online")}>
->>>>>>> Stashed changes
+
+                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} >
+
                             <View style={styles.iconTextContainer}>
                                 <Ionicons name="share-social-outline" size={24} color="white" />
                                 <Text style={[styles.menuText, { fontSize: fontSize }]}>Share App</Text>
@@ -87,8 +89,8 @@ const settings = () => {
 
                         <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} onPress={() => router.push("/(auth)/login")}>
                             <View style={styles.iconTextContainer}>
-                                <Ionicons name="log-out-outline" size={24} color="white" />
-                                <Text style={[styles.menuText, { fontSize: fontSize }]}>Logout</Text>
+                                <Ionicons name="trash-outline" size={22} color="#FF5252" />
+                                <Text style={[styles.deleteText, { fontSize: fontSize }]}>Delete Account</Text>
                             </View>
                         </TouchableOpacity>
                     </View>
@@ -120,6 +122,10 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         height: 61,
         marginBottom: 22,
+    },
+    deleteText: {
+        color: '#FF5252',
+        marginLeft: 15,
     },
     iconTextContainer: {
         flexDirection: 'row',

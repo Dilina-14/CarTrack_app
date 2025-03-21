@@ -50,6 +50,7 @@ const normalFeatures = [
 
   return (
     <ScreenWrapper>
+      
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" />
         

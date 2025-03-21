@@ -9,29 +9,34 @@ import { useNavigation } from "expo-router";
 import { Linking } from "react-native";
 
 const profile = () => {
-<<<<<<< Updated upstream
+
     const router = useRouter();
     const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
     const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
-=======
+
   const router = useRouter();
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
   
->>>>>>> Stashed changes
 
-    // Update dimensions on orientation changes
-    useEffect(() => {
-        const subscription = Dimensions.addEventListener('change', ({ window }) => {
-            setScreenWidth(window.width);
-            setScreenHeight(window.height);
-        });
-        return () => subscription?.remove();
-    }, []);
 
-<<<<<<< Updated upstream
+  const router = useRouter();
+  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
+
+
+  // Update dimensions on orientation changes
+  useEffect(() => {
+      const subscription = Dimensions.addEventListener('change', ({ window }) => {
+          setScreenWidth(window.width);
+          setScreenHeight(window.height);
+      });
+      return () => subscription?.remove();
+  }, []);
+
+
     // Calculate responsive values
     const avatarSize = screenWidth * 0.4 > 200 ? 200 : screenWidth * 0.4;
     const menuWidth = screenWidth * 0.9 > 368 ? 368 : screenWidth * 0.9;
@@ -53,7 +58,7 @@ const profile = () => {
                             />
                         </View>
                         <Text style={[styles.userName, { fontSize: headerFontSize }]}>Vidusha.W</Text>
-=======
+
   // Image picker function
   const pickImage = async () => {
     // Request permission
@@ -77,6 +82,7 @@ const profile = () => {
     }
   };
 
+
   // Calculate responsive values
   const avatarSize = screenWidth * 0.4 > 200 ? 200 : screenWidth * 0.4;
   const menuWidth = screenWidth * 0.9 > 368 ? 368 : screenWidth * 0.9;
@@ -84,7 +90,9 @@ const profile = () => {
   const headerFontSize = screenWidth * 0.07 > 30 ? 30 : screenWidth * 0.07;
   
 
+
   const navigation = useNavigation();
+
   return (
       <ScreenWrapper>
           <SafeAreaView style={styles.container}>
@@ -93,6 +101,7 @@ const profile = () => {
                   contentContainerStyle={{ paddingBottom: 100 }}
               >
                   <View style={styles.profileInfo}>
+
                       <TouchableOpacity 
                           style={[styles.avatarContainer, { width: avatarSize, height: avatarSize }]}
                           onPress={pickImage}
@@ -110,18 +119,26 @@ const profile = () => {
                           )}
                       </TouchableOpacity>
                       <Text style={[styles.userName, { fontSize: headerFontSize }]}>Vidusha.W</Text>
->>>>>>> Stashed changes
 
-                        <View style={styles.verifiedContainer}>
-                            <Image 
-                                source={require('../../assets/images/verify-icon.png')} 
-                                style={styles.verifyIcon}
-                            />
-                            <Text style={[styles.verifiedText, { fontSize: fontSize * 0.9 }]}>Verified</Text>
-                        </View>
-                    </View>
+                      <View style={[styles.avatarContainer, { width: avatarSize, height: avatarSize }]}>
+                          <Image 
+                              source={require('../../assets/images/avatar.png')} 
+                              style={[styles.avatar, { width: avatarSize, height: avatarSize }]}
+                          />
+                      </View>
+                      <Text style={[styles.userName, { fontSize: headerFontSize }]}>Vidusha.W</Text>
 
-<<<<<<< Updated upstream
+
+                      <View style={styles.verifiedContainer}>
+                          <Image 
+                              source={require('../../assets/images/verify-icon.png')} 
+                              style={styles.verifyIcon}
+                          />
+                          <Text style={[styles.verifiedText, { fontSize: fontSize * 0.9 }]}>Verified</Text>
+                      </View>
+                  </View>
+
+
                     <View style={styles.menuOptions}>
                         <TouchableOpacity 
                             style={[styles.menuItem, { width: menuWidth }]} 
@@ -164,7 +181,7 @@ const profile = () => {
             </SafeAreaView>
         </ScreenWrapper>
     );
-=======
+
                   <View style={styles.menuOptions}>
                       <TouchableOpacity 
                           style={[styles.menuItem, { width: menuWidth }]} 
@@ -192,7 +209,11 @@ const profile = () => {
                       
                       <TouchableOpacity 
                           style={[styles.menuItem, { width: menuWidth }]} 
+
                           onPress={() => Linking.openURL("https://www.cartrackapp.online")}
+
+                          onPress={() => router.push("/(profile)/help-and-support")}
+
                       >
                           <Image source={require('../../assets/images/Help-and-support-icon.png')} />
                           <Text style={[styles.menuText, { fontSize: fontSize }]}>Help & Support</Text>
@@ -210,7 +231,7 @@ const profile = () => {
           </SafeAreaView>
       </ScreenWrapper>
   );
->>>>>>> Stashed changes
+
 };
 
 export default profile;
