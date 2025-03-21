@@ -86,8 +86,8 @@ const profile = () => {
                           style={[styles.deleteItem, { width: menuWidth }]} 
                           onPress={() => router.push("/(auth)/login")}
                       >
-                          <Image source={require('../../assets/images/delete-icon.png')} />
-                          <Text style={[styles.deleteText, { fontSize: fontSize }]}>Delete Profile</Text>
+                          <Image source={require('../../assets/images/settings-page/logout-icon.png')} />
+                          <Text style={[styles.deleteText, { fontSize: fontSize }]}>Logout</Text>
                       </TouchableOpacity>
                   </View>
               </ScrollView>
