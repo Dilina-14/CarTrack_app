@@ -194,13 +194,13 @@ const Index = () => {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => router.push("/(tabs)/marketplace")}>
-            <View style={[styles.iconContainer, { borderColor: "#F91115" }]}>
-              <ShoppingCart size={43} color="#F91115" weight="bold" />
-              <Text style={[styles.iconText, { color: "#F91115" }]}>Shop</Text>
+            <View style={[styles.iconContainer, { borderColor: "#FF474A" }]}>
+              <ShoppingCart size={43} color="#FF474A" weight="bold" />
+              <Text style={[styles.iconText, { color: "#FF474A" }]}>Shop</Text>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push("/other/reports")}>
+          <TouchableOpacity onPress={() => router.push("/other/reportsPage")}>
             <View style={[styles.iconContainer, { borderColor: "#1570EF" }]}>
               <BookOpen size={43} color="#1570EF" weight="bold" />
               <Text style={[styles.iconText, { color: "#1570EF" }]}>
