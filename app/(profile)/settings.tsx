@@ -59,7 +59,7 @@ const settings = () => {
                             />
                         </View>
                         
-                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} onPress={() => router.push("/(MainScreens)/marketplace-display")}>
+                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} >
                             <View style={styles.iconTextContainer}>
                                 <Ionicons name="share-social-outline" size={24} color="white" />
                                 <Text style={[styles.menuText, { fontSize: fontSize }]}>Share App</Text>
