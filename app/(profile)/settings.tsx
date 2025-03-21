@@ -89,8 +89,8 @@ const settings = () => {
 
                         <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} onPress={() => router.push("/(auth)/login")}>
                             <View style={styles.iconTextContainer}>
-                                <Ionicons name="log-out-outline" size={24} color="white" />
-                                <Text style={[styles.menuText, { fontSize: fontSize }]}>Logout</Text>
+                                <Ionicons name="trash-outline" size={22} color="#FF5252" />
+                                <Text style={[styles.deleteText, { fontSize: fontSize }]}>Delete Account</Text>
                             </View>
                         </TouchableOpacity>
                     </View>
@@ -122,6 +122,10 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         height: 61,
         marginBottom: 22,
+    },
+    deleteText: {
+        color: '#FF5252',
+        marginLeft: 15,
     },
     iconTextContainer: {
         flexDirection: 'row',
