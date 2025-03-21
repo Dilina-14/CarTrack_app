@@ -8,19 +8,10 @@ const VehicleInfoScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Header with menu icon and user profile */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={28} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Vehicle Mode Reports</Text>
-          <TouchableOpacity style={styles.profileButton}>
-            <View style={styles.profileImage}>
-              {/* You would replace this with an actual image */}
-              <Text style={styles.profileInitial}>U</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+
+
+        <Text style={styles.header}>Vehicle Model Reports</Text>
+        
 
         {/* Main content */}
         <ScrollView style={styles.scrollView}>
@@ -79,41 +70,21 @@ const VehicleInfoScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#222',
+    backgroundColor: '#121212',
   },
   container: {
     flex: 1,
-    backgroundColor: '#222',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#333',
+    backgroundColor: '#121212',
   },
   menuButton: {
     padding: 8,
   },
-  headerTitle: {
-    fontSize: 18,
-    color: '#90EE90', // Light green color similar to the image
-    fontWeight: 'bold',
-  },
-  profileButton: {
-    padding: 8,
-  },
-  profileImage: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#FFA500', // Orange background for profile
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileInitial: {
-    color: 'white',
-    fontWeight: 'bold',
+  header: {
+    fontSize: 24,
+    color: '#C3FF65',
+    paddingHorizontal: 20,
+    marginTop: 10,
+    fontFamily: 'monospace',
   },
   scrollView: {
     flex: 1,

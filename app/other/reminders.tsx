@@ -43,7 +43,7 @@ const Reminders = () => {
             <View key={item.id} style={styles.reminderItem}>
               <View style={styles.reminderContent}>
                 <View style={styles.bellIconContainer}>
-                  <Ionicons name="notifications-outline" size={24} color="#fff" />
+                  <Ionicons name="notifications-outline" size={30} color="#fff" />
                 </View>
                 <View style={styles.reminderTextContainer}>
                   <Text style={styles.reminderTitle}>{item.title}</Text>
@@ -71,7 +71,7 @@ export default Reminders;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#121212',
     position: 'relative',
   },
   headerContainer: {
@@ -80,8 +80,7 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#BBFF00',
+    color: '#C3FF65',
     paddingHorizontal: 20,
     marginTop: 10,
     marginBottom: 20,
@@ -91,10 +90,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   reminderItem: {
-    backgroundColor: '#111',
+    backgroundColor: '#000000',
     borderRadius: 16,
     marginBottom: 15,
     overflow: 'hidden',
+    
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -108,7 +108,10 @@ const styles = StyleSheet.create({
   bellIconContainer: {
     backgroundColor: '#FF9D42',
     padding: 16,
-    borderRadius: 16,
+    borderRadius: 9,
+    marginLeft: 10,
+    marginTop: 10,
+    marginBottom: 10,
     marginRight: 12,
   },
   reminderTextContainer: {
