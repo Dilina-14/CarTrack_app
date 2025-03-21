@@ -26,6 +26,29 @@ export default function login() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+<<<<<<< Updated upstream
+=======
+ 
+  const handleLogin = async () => {
+    router.push("/(tabs)")
+    // Reset previous error
+    setError('');
+    
+    // Validate email and password
+    if (!form.email || !form.password) {
+      setError('Please enter both email and password');
+      Alert.alert('Error', 'Please enter both email and password');
+      return;
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      setError('Please enter a valid email address');
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+>>>>>>> Stashed changes
 
   const handleLogin = async () => {
     try {

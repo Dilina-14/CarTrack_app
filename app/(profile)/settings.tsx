@@ -4,6 +4,7 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { colors, spacingX } from "@/constants/theme";
 import { useRouter } from "expo-router";
 import { useTailwind } from 'tailwind-rn';
+import { Linking } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 
 const settings = () => {
@@ -59,31 +60,28 @@ const settings = () => {
                             />
                         </View>
                         
+<<<<<<< Updated upstream
                         <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]}>
+=======
+                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} onPress={() => Linking.openURL("https://www.cartrackapp.online")}>
+>>>>>>> Stashed changes
                             <View style={styles.iconTextContainer}>
                                 <Ionicons name="share-social-outline" size={24} color="white" />
                                 <Text style={[styles.menuText, { fontSize: fontSize }]}>Share App</Text>
                             </View>
                         </TouchableOpacity>
                         
-                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]}>
+                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} onPress={() => router.push("/other/TermsAndConditions")}>
                             <View style={styles.iconTextContainer}>
                                 <Ionicons name="document-text-outline" size={24} color="white" />
                                 <Text style={[styles.menuText, { fontSize: fontSize }]}>Terms and Conditions</Text>
                             </View>
                         </TouchableOpacity>
                         
-                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]}>
-                            <View style={styles.iconTextContainer}>
-                                <Ionicons name="chatbox-outline" size={24} color="white" />
-                                <Text style={[styles.menuText, { fontSize: fontSize }]}>Feedback</Text>
-                            </View>
-                        </TouchableOpacity>
-                        
-                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]}>
+                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} onPress={() => Linking.openURL("https://www.cartrackapp.online")}>
                             <View style={styles.iconTextContainer}>
                                 <Ionicons name="mail-outline" size={24} color="white" />
-                                <Text style={[styles.menuText, { fontSize: fontSize }]}>Contact</Text>
+                                <Text style={[styles.menuText, { fontSize: fontSize }]}>Feedback & Contact</Text>
                             </View>
                         </TouchableOpacity>
 

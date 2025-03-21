@@ -10,7 +10,11 @@ const _layout = () => {
       <Tabs.Screen name="news" />
       <Tabs.Screen name="marketplace" />
       <Tabs.Screen name="profile" />
+<<<<<<< Updated upstream
         
+=======
+
+>>>>>>> Stashed changes
     </Tabs>
     
   )

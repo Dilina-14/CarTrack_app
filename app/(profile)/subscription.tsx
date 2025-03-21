@@ -4,11 +4,14 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTailwind } from 'tailwind-rn';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from "expo-router";
+
 
 const Subscription = () => {
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
   const [selectedPlan, setSelectedPlan] = useState("premium");
+  const navigation = useNavigation();
   
   const tw = useTailwind();
 
@@ -26,12 +29,24 @@ const Subscription = () => {
   const planTitleSize = Math.min(fontSize * 1.5, 24);
   
   // Feature list for both plans
-  const features = [
+  const premiumFeatures = [
+    "Cost Management",
+    "Marketplace",
+    "Online Bidding System",
+    "Event Notifier",
     "Add News",
-    "Unlimited chats in chatbot",
-    "Remove ads",
-    "Full detailed vehicle reports"
-  ];
+    "Unlimited Chats in Chatbot",
+    "Remove Ads",
+    "Full Detailed Vehicle Reports"
+];
+
+const normalFeatures = [
+    "Cost Management",
+    "Marketplace",
+    "Online Bidding System",
+    "Event Notifier"
+];
+
 
   return (
     <ScreenWrapper>
@@ -45,6 +60,9 @@ const Subscription = () => {
           contentContainerStyle={styles.scrollContent}
         >
           <Text style={[styles.pageTitle, { fontSize: planTitleSize * 1.1, width: cardWidth }]}>
+            <TouchableOpacity style={[styles.arrow, { }]} onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={28} color="#fff" />
+            </TouchableOpacity>
             Subscription Plan
           </Text>
           
@@ -62,9 +80,9 @@ const Subscription = () => {
             >
               <Text style={[styles.planTitle, { fontSize: planTitleSize }]}>FREE</Text>
               
-              {features.map((feature, index) => (
+              {normalFeatures.map((normalFeatures, index) => (
                 <View key={index} style={styles.featureRow}>
-                  <Text style={[styles.featureText, { fontSize }]}>{feature}</Text>
+                  <Text style={[styles.featureText, { fontSize }]}>{normalFeatures}</Text>
                 </View>
               ))}
             </View>
@@ -90,7 +108,7 @@ const Subscription = () => {
                 Premium Plan
               </Text>
               
-              {features.map((feature, index) => (
+              {premiumFeatures.map((feature, index) => (
                 <View key={index} style={styles.featureRow}>
                   <Text style={[styles.featureText, styles.premiumFeatureText, { fontSize }]}>
                     {feature}
@@ -112,7 +130,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#121212",
     alignItems: "center",
-    marginTop: 40,
+    marginTop: 30,
   },
   scrollContent: {
     paddingBottom: 100,
@@ -121,11 +139,13 @@ const styles = StyleSheet.create({
   pageTitle: {
     color: "#C6FF66",
     fontWeight: "700",
-    marginTop: 20,
-    marginBottom: 40,
+    marginBottom: 20,
     marginRight: 30,
     alignSelf: "flex-start",
     paddingHorizontal: 20,
+  },
+  arrow: {
+    marginRight:30,
   },
   planCard: {
     backgroundColor: "#333333",
