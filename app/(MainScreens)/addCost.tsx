@@ -79,7 +79,7 @@ const AddCost = () => {
         console.log("Expense saved to Firestore!");
   
         // Navigate to the index in tabs
-        router.push("/(tabs)");
+        router.push("../(tabs)");
       } catch (error) {
         console.error("Error saving expense:", error);
       }
@@ -176,7 +176,7 @@ const AddCost = () => {
 
       {/* Buttons */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={() => router.push("/(tabs)")} style={styles.cancelButton}>
+        <TouchableOpacity onPress={() => router.push("../(tabs)")} style={styles.cancelButton}>
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
