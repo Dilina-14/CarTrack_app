@@ -47,39 +47,6 @@ interface UserData {
   phoneNumber: string;
 }
 
-const Index = () => {
-  const [userName, setUserName] = useState<string>(''); // Add this new state for user name
-  const [loading, setLoading] = useState<boolean>(true); // Optional loading state
-
-  // Fetch user data when the component mounts
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setLoading(true);
-        const auth = getAuth();
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          const db = getFirestore(app);
-          const userDocRef = doc(db, 'users', currentUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          
-          if (userDocSnap.exists()) {
-            const userData = userDocSnap.data() as UserData;
-            setUserName(userData.name || '');
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-}
-
-
 // Expense List Component
 const ExpenseList = () => {
   const [expenseItems, setExpenseItems] = useState<ExpenseItem[]>([]);
@@ -197,7 +164,7 @@ const ExpenseList = () => {
                     <Text style={styles.expenseTitle}>{item.category}</Text>
                     <Text style={styles.expenseDescription}>
                       {item.note.length > 15
-                        ? `${item.note.slice(0, 12)}...`
+                        ? ${item.note.slice(0, 12)}...
                         : item.note}
                     </Text>
                   </View>
@@ -207,7 +174,7 @@ const ExpenseList = () => {
                 <View style={styles.expenseAmountContainer}>
                   <Text style={styles.expenseAmount}>
                     {`LKR.${parseFloat(item.amount).toFixed(2).length > 12
-                      ? `${parseFloat(item.amount).toFixed(2).slice(0, 11)}...`
+                      ? ${parseFloat(item.amount).toFixed(2).slice(0, 11)}...
                       : parseFloat(item.amount).toFixed(2)}`}
                   </Text>
                 </View>
@@ -380,7 +347,7 @@ const ExpenseGraph = () => {
         <View style={styles.chartContent}>
           {/* Horizontal grid lines */}
           {[0, 1, 2, 3].map((_, index) => (
-            <View key={`line-${index}`} style={styles.gridLine} />
+            <View key={line-${index}} style={styles.gridLine} />
           ))}
 
           {/* Bars */}
@@ -391,7 +358,7 @@ const ExpenseGraph = () => {
                   style={[
                     styles.bar,
                     {
-                      height: `${(item.value / maxValue) * 80}%`,
+                      height: ${(item.value / maxValue) * 80}%,
                       backgroundColor: "#C6FF66",
                     },
                   ]}
@@ -454,7 +421,7 @@ const HomeScreen = () => {
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
       <Text style={styles.greeting}>
-        {loading ? 'Loading...' : `Hello, ${userName || 'User'}`}
+        {loading ? 'Loading...' : Hello, ${userName || 'User'}}
       </Text>
         <ScrollView
           horizontal
@@ -759,5 +726,4 @@ closeIcon: {
 },
 });
   
-
 export default HomeScreen;
