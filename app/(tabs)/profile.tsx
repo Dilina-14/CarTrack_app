@@ -14,6 +14,7 @@ interface UserData {
   name: string;
   email: string;
   phoneNumber: string;
+  profileImage: string;
 }
 
 const Profile = () => {
