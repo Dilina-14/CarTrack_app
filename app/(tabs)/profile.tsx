@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View, Dimensions, SafeAreaView, ScrollView } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View, Dimensions, SafeAreaView, ScrollView, Alert } from "react-native";
 import React, { useEffect, useState } from "react";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { colors } from "@/constants/theme";
@@ -6,8 +6,9 @@ import { useRouter } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { Linking } from "react-native";
-import { auth, db } from '@/firebaseAuth';
-import { doc, getDoc, DocumentData } from 'firebase/firestore';
+import { auth, db, storage } from "@/firebaseAuth";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getDoc, doc, setDoc, DocumentData } from "firebase/firestore";
 
 interface UserData {
   name: string;
@@ -46,6 +47,12 @@ const Profile = () => {
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data() as UserData;
             setUserName(userData.name || '');
+            
+            // Also get profile image if it exists
+            if (userData.profileImage) {
+              setProfileImage(userData.profileImage);
+              console.log("Profile image loaded from Firestore");
+            }
           }
         }
       } catch (error) {
@@ -60,21 +67,84 @@ const Profile = () => {
 
   // Image picker function
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Sorry, we need camera roll permissions to change your profile picture!');
-      return;
-    }
+    try {
+      // Check if user is authenticated
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("No authenticated user found");
+        Alert.alert("Authentication Error", "Please login again before updating your profile");
+        return;
+      }
+      console.log("Authenticated user ID:", user.uid);
 
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+      // Request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert("Permission Denied", "Sorry, we need camera roll permissions to change your profile picture!");
+        return;
+      }
 
-    if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
+      // Launch image picker
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        const imageUri = result.assets[0].uri;
+        // Update UI immediately with local image
+        setProfileImage(imageUri);
+        console.log("Local image selected:", imageUri);
+
+        console.log("Starting upload for user:", user.uid);
+        
+        // Convert image to blob for upload
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        
+        // Create a unique filename
+        const fileName = `profile_${new Date().getTime()}`;
+        const storagePath = `profileImages/${user.uid}/${fileName}`;
+        console.log("Uploading to path:", storagePath);
+        
+        // Create storage reference and upload
+        const storageRef = ref(storage, storagePath);
+        
+        // Upload image
+        console.log("Starting upload task...");
+        await uploadBytes(storageRef, blob);
+        console.log("Upload completed successfully");
+        
+        // Get the download URL
+        const downloadURL = await getDownloadURL(storageRef);
+        console.log("Download URL obtained:", downloadURL);
+
+        // Save the download URL to Firestore
+        const userRef = doc(db, "users", user.uid);
+        await setDoc(userRef, { 
+          profileImage: downloadURL,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        
+        console.log("Firestore update completed");
+
+        // Update the local state with the remote URL
+        setProfileImage(downloadURL);
+        Alert.alert("Success", "Profile picture updated successfully!");
+      }
+    } catch (error: any) {
+      console.error("Detailed error:", error);
+      
+      // More user-friendly error messages
+      if (error.code === 'storage/unauthorized') {
+        Alert.alert("Permission Error", "Storage permission denied. Please try logging out and back in.");
+      } else if (error.code === 'permission-denied') {
+        Alert.alert("Database Error", "Database permission denied. Please try logging out and back in.");
+      } else {
+        Alert.alert("Update Failed", "There was a problem updating your profile picture. Please try again.");
+      }
     }
   };
 
@@ -83,6 +153,17 @@ const Profile = () => {
   const menuWidth = screenWidth * 0.9 > 368 ? 368 : screenWidth * 0.9;
   const fontSize = screenWidth * 0.04 > 16 ? 16 : screenWidth * 0.04;
   const headerFontSize = screenWidth * 0.07 > 30 ? 30 : screenWidth * 0.07;
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      router.push("/(auth)/login");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      Alert.alert("Logout Failed", "There was a problem signing out. Please try again.");
+    }
+  };
 
   return (
     <ScreenWrapper>
@@ -152,10 +233,10 @@ const Profile = () => {
               <Image source={require('../../assets/images/Help-and-support-icon.png')} />
               <Text style={[styles.menuText, { fontSize: fontSize }]}>Help & Support</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.deleteItem, { width: menuWidth }]}
-              onPress={() => router.push("/(auth)/login")}
+            
+            <TouchableOpacity 
+              style={[styles.deleteItem, { width: menuWidth }]} 
+              onPress={handleLogout}
             >
               <Image source={require('../../assets/images/settings-page/logout-icon.png')} />
               <Text style={[styles.deleteText, { fontSize: fontSize }]}>Logout</Text>
