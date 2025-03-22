@@ -68,7 +68,7 @@ export default function login() {
       console.log('User logged in successfully');
   
       // Navigate to the next screen
-      router.push('/(tabs)');
+      router.push('../(tabs)');
     } catch (error: any) {
       console.error('Login error:', error);
       

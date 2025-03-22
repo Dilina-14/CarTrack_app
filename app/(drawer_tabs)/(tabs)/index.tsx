@@ -27,11 +27,10 @@ import { colors } from "@/constants/theme";
 import { router } from "expo-router";
 
 import { getAuth } from "firebase/auth";
-import { getFirestore, collection, query, where, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+import { getFirestore, collection, query, where, onSnapshot, deleteDoc, doc, getDoc } from "firebase/firestore";
 import { app } from "../../../firebaseAuth"; // Adjust the path to your Firebase config file
 import TopBar from "@/components/TopBar";
 import ScreenWrapper from "@/components/ScreenWrapper";
-
 
 // Define the type for expense items
 type ExpenseItem = {
@@ -41,6 +40,13 @@ type ExpenseItem = {
   amount: string;
   note: string;
 };
+
+interface UserData {
+  name: string;
+  email: string;
+  phoneNumber: string;
+}
+
 // Expense List Component
 const ExpenseList = () => {
   const [expenseItems, setExpenseItems] = useState<ExpenseItem[]>([]);
@@ -158,7 +164,7 @@ const ExpenseList = () => {
                     <Text style={styles.expenseTitle}>{item.category}</Text>
                     <Text style={styles.expenseDescription}>
                       {item.note.length > 15
-                        ? `${item.note.slice(0, 12)}...`
+                        ? ${item.note.slice(0, 12)}...
                         : item.note}
                     </Text>
                   </View>
@@ -168,7 +174,7 @@ const ExpenseList = () => {
                 <View style={styles.expenseAmountContainer}>
                   <Text style={styles.expenseAmount}>
                     {`LKR.${parseFloat(item.amount).toFixed(2).length > 12
-                      ? `${parseFloat(item.amount).toFixed(2).slice(0, 11)}...`
+                      ? ${parseFloat(item.amount).toFixed(2).slice(0, 11)}...
                       : parseFloat(item.amount).toFixed(2)}`}
                   </Text>
                 </View>
@@ -341,7 +347,7 @@ const ExpenseGraph = () => {
         <View style={styles.chartContent}>
           {/* Horizontal grid lines */}
           {[0, 1, 2, 3].map((_, index) => (
-            <View key={`line-${index}`} style={styles.gridLine} />
+            <View key={line-${index}} style={styles.gridLine} />
           ))}
 
           {/* Bars */}
@@ -352,7 +358,7 @@ const ExpenseGraph = () => {
                   style={[
                     styles.bar,
                     {
-                      height: `${(item.value / maxValue) * 80}%`,
+                      height: ${(item.value / maxValue) * 80}%,
                       backgroundColor: "#C6FF66",
                     },
                   ]}
@@ -379,13 +385,44 @@ const ExpenseGraph = () => {
   );
 };
 
-const Index = () => {
+const HomeScreen = () => {
+  const [userName, setUserName] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const db = getFirestore(app);
+          const userDocRef = doc(db, 'users', currentUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data() as UserData;
+            setUserName(userData.name || '');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   return (
     <ScreenWrapper>
-    <TopBar onMenuPress={() => console.log("Menu pressed")}/>
+    <TopBar onMenuPress={() => console.log("Menu pressed")} />
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.greeting}>Good Evening, Steve</Text>
+      <Text style={styles.greeting}>
+        {loading ? 'Loading...' : Hello, ${userName || 'User'}}
+      </Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -400,7 +437,7 @@ const Index = () => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push("./(tabs)/marketplace")}>
+          <TouchableOpacity onPress={() => router.push("../(tabs)/marketplace")}>
             <View style={[styles.iconContainer, { borderColor: "#FF474A" }]}>
               <ShoppingCart size={43} color="#FF474A" weight="bold" />
               <Text style={[styles.iconText, { color: "#FF474A" }]}>Shop</Text>
@@ -416,7 +453,7 @@ const Index = () => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push("./(tabs)/news")}>
+          <TouchableOpacity onPress={() => router.push("../(tabs)/news")}>
             <View style={[styles.iconContainer, { borderColor: "#A020F0" }]}>
               <Newspaper size={43} color="#A020F0" weight="bold" />
               <Text style={[styles.iconText, { color: "#A020F0" }]}>News</Text>
@@ -438,7 +475,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#121212",
-
   },
   greeting: {
     fontSize: 24,
@@ -690,5 +726,4 @@ closeIcon: {
 },
 });
   
-
-export default Index;
+export default HomeScreen;
