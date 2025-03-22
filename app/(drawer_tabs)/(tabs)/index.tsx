@@ -28,7 +28,7 @@ import { router } from "expo-router";
 
 import { getAuth } from "firebase/auth";
 import { getFirestore, collection, query, where, onSnapshot, deleteDoc, doc, getDoc } from "firebase/firestore";
-import { app } from "../../firebaseAuth"; // Adjust the path to your Firebase config file
+import { app } from "../../../firebaseAuth"; // Adjust the path to your Firebase config file
 
 // Define the type for expense items
 type ExpenseItem = {
