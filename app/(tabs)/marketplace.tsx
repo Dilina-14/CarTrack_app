@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,286 +6,101 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
-  TextInput
+  ActivityIndicator
 } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import { Funnel, MagnifyingGlass } from "phosphor-react-native";
 import { useRouter } from "expo-router";
 import ScreenWrapper from '@/components/ScreenWrapper';
-import { colors } from '@/constants/theme';
-import TopBar from '@/components/TopBar';
 
-// Sample data
-const DATA = [
-  {
-    id: '1',
-    title: 'Honda Vezel - RS 2016',
-    km: '101,000 km',
-    location: 'Colombo, Cars',
-    price: '13,500,000',
-    imageUrl:
-      'https://www.automall.lk/wp-content/uploads/2024/06/WhatsApp-Image-2024-05-10-at-12.17.56-PM.jpeg',
-    verified: true,
-    daysAgo: 12,
-  },
-  {
-    id: '2',
-    title: 'Hilux Vigo - 2013',
-    km: '105,000 km',
-    location: 'Colombo, Cars',
-    price: '12,500,000',
-    imageUrl:
-      'https://toyota-dealer.org/images/2016-Toyota-Hilux-Revo/2016-Toyota-Hilux-Revo-black-front.JPG',
-    verified: true,
-    daysAgo: 13,
-  },
-  {
-    id: '3',
-    title: 'Bajaj RE - 2013',
-    km: '22,000 km',
-    location: 'Horowpathana, Trishaw',
-    price: '1,500,000',
-    imageUrl:
-      'https://www.riyasakwala.lk/public/images/vehicle_ad/10/AD00017-1.jpeg',
-    verified: false,
-    daysAgo: 1,
-  },
-  {
-    id: '4',
-    title: 'Toyota Supra MK4 - 2013',
-    km: '198,000 km',
-    location: 'Bambalapitiya, Cars',
-    price: '75,500,000',
-    imageUrl:
-      'https://venteautoprestige.com/wp-content/uploads/2024/03/Toyota-Supra-MK4-blanche-trois-quarts-avant.webp',
-    verified: true,
-    daysAgo: 15,
-  },
-  {
-    id: '5',
-    title: 'Hilux Vigo - 2013',
-    km: '110,000 km',
-    location: 'Colombo, Cars',
-    price: '12,000,000',
-    imageUrl:
-      'https://www.carjunction.com/car_images2/32795_44665/44665a.jpg',
-    verified: false,
-    daysAgo: 14,
-  },
-  {
-    id: '6',
-    title: 'Honda Civic - 2018',
-    km: '75,000 km',
-    location: 'Colombo, Cars',
-    price: '15,000,000',
-    imageUrl:
-      'https://car-images.bauersecure.com/wp-images/2301/honda-civic-93.jpg',
-    verified: true,
-    daysAgo: 10,
-  },
-  {
-    id: '7',
-    title: 'Nissan Leaf - 2015',
-    km: '88,000 km',
-    location: 'Colombo, Cars',
-    price: '8,000,000',
-    imageUrl:
-      'https://images.hgmsites.net/hug/2015-nissan-leaf_100473855_h.jpg',
-    verified: false,
-    daysAgo: 7,
-  },
-  {
-    id: '8',
-    title: 'Suzuki Alto - 2012',
-    km: '120,000 km',
-    location: 'Colombo, Cars',
-    price: '2,500,000',
-    imageUrl:
-      'https://static.carfromjapan.com/car_7b785ab5-2f85-4255-b320-a7ca5219d956',
-    verified: false,
-    daysAgo: 4,
-  },
-  {
-    id: '9',
-    title: 'Mitsubishi Lancer - 2008',
-    km: '150,000 km',
-    location: 'Colombo, Cars',
-    price: '4,000,000',
-    imageUrl:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/2008_Mitsubishi_Lancer_%28CJ%29_ES_sedan_%282018-09-26%29_01.jpg/1280px-2008_Mitsubishi_Lancer_%28CJ%29_ES_sedan_%282018-09-26%29_01.jpg',
-    verified: false,
-    daysAgo: 2,
-  },
-  {
-    id: '10',
-    title: 'BMW 3 Series - 2016',
-    km: '90,000 km',
-    location: 'Colombo, Cars',
-    price: '18,000,000',
-    imageUrl:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/2016_BMW_328i_%28F30%29_sedan_%282018-09-28%29_01.jpg/1280px-2016_BMW_328i_%28F30%29_sedan_%282018-09-28%29_01.jpg',
-    verified: true,
-    daysAgo: 9,
-  },
-  {
-    id: '11',
-    title: 'Mercedes-Benz C-Class - 2017',
-    km: '80,000 km',
-    location: 'Colombo, Cars',
-    price: '20,000,000',
-    imageUrl:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/2017_Mercedes-Benz_C200_%28W205%29_sedan_%282018-09-27%29_01.jpg/1280px-2017_Mercedes-Benz_C200_%28W205%29_sedan_%282018-09-27%29_01.jpg',
-    verified: true,
-    daysAgo: 6,
-  },
-  {
-    id: '12',
-    title: 'Audi A4 - 2019',
-    km: '65,000 km',
-    location: 'Colombo, Cars',
-    price: '22,000,000',
-    imageUrl:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/2019_Audi_A4_S_line_%28B9%29_sedan_%282020-09-26%29_01.jpg/1280px-2019_Audi_A4_S_line_%28B9%29_sedan_%282020-09-26%29_01.jpg',
-    verified: true,
-    daysAgo: 3,
-  },
-  {
-    id: '13',
-    title: 'Another Honda Vezel - RS 2016',
-    km: '111,000 km',
-    location: 'Colombo, Cars',
-    price: '14,500,000',
-    imageUrl:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/2018_Honda_Vezel_Hybrid_RS_%28RU3%29_wagon_%282018-09-29%29_01.jpg/1280px-2018_Honda_Vezel_Hybrid_RS_%28RU3%29_wagon_%282018-09-29%29_01.jpg',
-    verified: true,
-    daysAgo: 11,
-  },
-];
-
-const ITEMS_PER_PAGE = 8; // Number of items per page
-
-// SearchBar Component
-const SearchBar = () => {
-  return (
-    <View style={styles.searchBarContainer}>
-      <TouchableOpacity style={styles.filterButton}>
-        <Funnel size={24} color="white" weight="bold" />
-      </TouchableOpacity>
-      <View style={styles.searchContainer}>
-        <TextInput
-          placeholder="Search"
-          placeholderTextColor="gray"
-          style={styles.input}
-        />
-        <MagnifyingGlass size={20} color="black" />
-      </View>
-    </View>
-  );
-};
+const ITEMS_PER_PAGE = 8;
 
 const Marketplace = () => {
+  interface Item {
+    id: string;
+    imageUrl: string;
+    title: string;
+    km: string;
+    location: string;
+    price: string;
+    verified: boolean;
+    daysAgo: number;
+  }
+
+  const [data, setData] = useState<Item[]>([]);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const router = useRouter();
 
   useEffect(() => {
-    loadData();
-  }, [page]); // Load data when the page changes
-
-  const loadData = useCallback(() => {
-    setLoading(true);
-    setTotalPages(Math.ceil(DATA.length / ITEMS_PER_PAGE));
-    setLoading(false);
+    fetchData();
   }, [page]);
 
-  const renderFooter = () => {
-    if (loading) {
-      return (
-        <View style={styles.loadingMore}>
-          <ActivityIndicator size="large" color="#0000ff" />
-        </View>
-      );
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`http://192.168.1.67:3000/marketplace`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+
+      console.log('Fetched Data:', result); // Log the fetched data
+      setData(result);
+      setTotalPages(Math.ceil(result.length / ITEMS_PER_PAGE));
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      alert('Failed to fetch data. Please try again later.');
+    } finally {
+      setLoading(false);
     }
-    return null;
   };
 
-  const renderPagination = () => {
-    const pageButtons = [];
-    for (let i = 1; i <= totalPages; i++) {
-      pageButtons.push(
-        <TouchableOpacity
-          key={i}
-          style={[
-            styles.pageButton,
-            page === i ? styles.activePageButton : null,
-          ]}
-          onPress={() => setPage(i)}
-        >
-          <Text
-            style={[
-              styles.pageButtonText,
-              page === i ? styles.activePageButtonText : null,
-            ]}
-          >
-            {i}
-          </Text>
-        </TouchableOpacity>
-      );
-    }
-
-    return (
-      <View style={styles.paginationContainer}>
-        {pageButtons}
-      </View>
-    );
-  };
-
-  // Helper function to get items for the current page
   const getPaginatedData = () => {
     const startIndex = (page - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
-    return DATA.slice(startIndex, endIndex);
+    return data.slice(startIndex, endIndex);
   };
 
   return (
     <ScreenWrapper>
-      <TopBar onMenuPress={() => console.log("Menu pressed")} />
-      <View style={styles.container}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#45B1FF" />
+      ) : (
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <SearchBar />
-          {getPaginatedData().map(item => (
-            <TouchableOpacity 
-              key={item.id} 
+          {getPaginatedData().map((item) => (
+            <TouchableOpacity
+              key={item.id}
               style={styles.itemContainer}
-              onPress={() => router.push("/marketplace-display")}
+              onPress={() => router.push(`/marketplace-display`)} // Pass item ID to the next screen
             >
-              <View style={styles.imageContainer}>
-                <Image source={{ uri: item.imageUrl }} style={styles.image} />
-              </View>
-
+              <Image source={{ uri: item.imageUrl }} style={styles.image} />
               <View style={styles.detailsContainer}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.km}>{item.km}</Text>
-                <Text style={styles.location}>{item.location}</Text>
-                <Text style={styles.price}>Rs {item.price}</Text>
-                <View style={styles.bottomRow}>
-                  {item.verified && (
-                    <View style={styles.verifiedContainer}>
-                      <FontAwesome name="check-circle" size={14} color="#45B1FF" />
-                      <Text style={styles.verifiedText}>Verified</Text>
-                    </View>
-                  )}
-                  <Text style={styles.daysAgo}>{item.daysAgo} Days</Text>
-                </View>
+                <Text style={styles.title}>{item.title || 'No Title Available'}</Text>
+                <Text style={styles.km}>{item.km ? `${item.km} km` : 'N/A'}</Text>
+                <Text style={styles.location}>{item.location || 'Unknown Location'}</Text>
+                <Text style={styles.price}>{item.price ? `LKR ${item.price}` : 'Price Not Available'}</Text>
+                {item.verified && (
+                  <View style={styles.verifiedContainer}>
+                    <Text style={styles.verifiedText}>✅ Verified</Text>
+                  </View>
+                )}
+                <Text style={styles.daysAgo}>{item.daysAgo || 0} Days ago</Text>
               </View>
             </TouchableOpacity>
           ))}
-          {renderFooter()}
-          {renderPagination()}
+
+          {/* Pagination */}
+          <View style={styles.pagination}>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+              <TouchableOpacity key={num} onPress={() => setPage(num)}>
+                <Text style={page === num ? styles.activePage : styles.page}>
+                  {num}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </ScrollView>
-      </View>
+      )}
     </ScreenWrapper>
   );
 };
@@ -293,7 +108,7 @@ const Marketplace = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primaryDark, 
+    backgroundColor: '#121212', // Replace with your desired color
     padding: 10,
   },
   scrollContent: {
@@ -313,31 +128,32 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 120,
+    height: 100, // Reduce height if necessary
     borderRadius: 8,
     resizeMode: 'cover',
   },
   detailsContainer: {
     flex: 1, 
     justifyContent: 'space-between',
+    paddingHorizontal: 10, // Add padding for better spacing
   },
   title: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#ffffff', // Ensure this contrasts with the background
   },
   km: {
     fontSize: 14,
-    color: '#ccc', 
+    color: '#cccccc', // Ensure this contrasts with the background
   },
   location: {
     fontSize: 14,
-    color: '#ccc',
+    color: '#cccccc', // Ensure this contrasts with the background
   },
   price: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: 'green',
+    color: '#00ff00', // Green for visibility
   },
   bottomRow: {
     flexDirection: 'row',
@@ -360,37 +176,51 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0, 
   },
-  loadingMore: {
-    paddingVertical: 20,
-    alignItems: 'center',
-  },
   paginationContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 10,
+    marginVertical: 10,
   },
   pageButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginHorizontal: 5,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginHorizontal: 4,
+    backgroundColor: '#eee',
     borderRadius: 5,
-    backgroundColor: '#555', 
   },
   activePageButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#45B1FF',
+  },
+  activePage: {
+    fontWeight: 'bold',
+    color: '#45B1FF',
+  },
+  page: {
+    fontWeight: 'normal',
+    color: '#000',
   },
   pageButtonText: {
+    color: '#000',
     fontSize: 16,
-    color: '#fff',
   },
   activePageButtonText: {
-    color: 'black',
+    color: '#fff',
+    fontWeight: 'bold',
   },
+  loadingMore: {
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  pagination: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 10,
+  },
+
   searchBarContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.primaryDark,
+    backgroundColor: '#121212', // Replace with your desired color
     padding: 10,
   },
   filterButton: {
@@ -416,6 +246,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000",
   },
+  
+
 });
 
 export default Marketplace;
