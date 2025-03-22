@@ -27,11 +27,8 @@ import { colors } from "@/constants/theme";
 import { router } from "expo-router";
 
 import { getAuth } from "firebase/auth";
-import { getFirestore, collection, query, where, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+import { getFirestore, collection, query, where, onSnapshot, deleteDoc, doc, getDoc } from "firebase/firestore";
 import { app } from "../../firebaseAuth"; // Adjust the path to your Firebase config file
-import TopBar from "@/components/TopBar";
-import ScreenWrapper from "@/components/ScreenWrapper";
-
 
 // Define the type for expense items
 type ExpenseItem = {
@@ -41,6 +38,46 @@ type ExpenseItem = {
   amount: string;
   note: string;
 };
+
+interface UserData {
+  name: string;
+  email: string;
+  phoneNumber: string;
+}
+
+const Index = () => {
+  const [userName, setUserName] = useState<string>(''); // Add this new state for user name
+  const [loading, setLoading] = useState<boolean>(true); // Optional loading state
+
+  // Fetch user data when the component mounts
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const db = getFirestore(app);
+          const userDocRef = doc(db, 'users', currentUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data() as UserData;
+            setUserName(userData.name || '');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+}
+
+
 // Expense List Component
 const ExpenseList = () => {
   const [expenseItems, setExpenseItems] = useState<ExpenseItem[]>([]);
@@ -379,13 +416,42 @@ const ExpenseGraph = () => {
   );
 };
 
-const Index = () => {
+const HomeScreen = () => {
+  const [userName, setUserName] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const db = getFirestore(app);
+          const userDocRef = doc(db, 'users', currentUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data() as UserData;
+            setUserName(userData.name || '');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   return (
-    <ScreenWrapper>
-    <TopBar onMenuPress={() => console.log("Menu pressed")}/>
     <View style={styles.container}>
+      <Text style={styles.greeting}>
+        {loading ? 'Loading...' : `Hello, ${userName || 'User'}`}
+      </Text>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.greeting}>Good Evening, Steve</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -430,7 +496,6 @@ const Index = () => {
 
       </ScrollView>
     </View>
-    </ScreenWrapper>
   );
 };
 
@@ -438,7 +503,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#121212",
-
+    paddingTop: 20,
   },
   greeting: {
     fontSize: 24,
@@ -691,4 +756,4 @@ closeIcon: {
 });
   
 
-export default Index;
+export default HomeScreen;
