@@ -29,6 +29,8 @@ import { router } from "expo-router";
 import { getAuth } from "firebase/auth";
 import { getFirestore, collection, query, where, onSnapshot, deleteDoc, doc, getDoc } from "firebase/firestore";
 import { app } from "../../../firebaseAuth"; // Adjust the path to your Firebase config file
+import TopBar from "@/components/TopBar";
+import ScreenWrapper from "@/components/ScreenWrapper";
 
 // Define the type for expense items
 type ExpenseItem = {
@@ -447,11 +449,13 @@ const HomeScreen = () => {
   }, []);
 
   return (
+    <ScreenWrapper>
+    <TopBar onMenuPress={() => console.log("Menu pressed")} />
     <View style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
       <Text style={styles.greeting}>
         {loading ? 'Loading...' : `Hello, ${userName || 'User'}`}
       </Text>
-      <ScrollView showsVerticalScrollIndicator={false}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -466,7 +470,7 @@ const HomeScreen = () => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push("/(tabs)/marketplace")}>
+          <TouchableOpacity onPress={() => router.push("../(tabs)/marketplace")}>
             <View style={[styles.iconContainer, { borderColor: "#FF474A" }]}>
               <ShoppingCart size={43} color="#FF474A" weight="bold" />
               <Text style={[styles.iconText, { color: "#FF474A" }]}>Shop</Text>
@@ -482,7 +486,7 @@ const HomeScreen = () => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push("/(tabs)/news")}>
+          <TouchableOpacity onPress={() => router.push("../(tabs)/news")}>
             <View style={[styles.iconContainer, { borderColor: "#A020F0" }]}>
               <Newspaper size={43} color="#A020F0" weight="bold" />
               <Text style={[styles.iconText, { color: "#A020F0" }]}>News</Text>
@@ -496,6 +500,7 @@ const HomeScreen = () => {
 
       </ScrollView>
     </View>
+    </ScreenWrapper>
   );
 };
 
@@ -503,7 +508,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#121212",
-    paddingTop: 20,
   },
   greeting: {
     fontSize: 24,
