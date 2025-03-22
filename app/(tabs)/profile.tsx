@@ -8,7 +8,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { Linking } from "react-native";
 import { auth, db, storage } from "@/firebaseAuth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { getDoc, doc, setDoc } from "firebase/firestore";
+import { getDoc, doc, setDoc, DocumentData } from "firebase/firestore";
+
+interface UserData {
+  name: string;
+  email: string;
+  phoneNumber: string;
+}
 
 const Profile = () => {
   const router = useRouter();
@@ -16,7 +22,8 @@ const Profile = () => {
   const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
-  const [userName, setUserName] = useState("Vidusha.W");
+  const [userName, setUserName] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Update dimensions on orientation changes
   useEffect(() => {
@@ -27,37 +34,35 @@ const Profile = () => {
     return () => subscription?.remove();
   }, []);
 
-  // Fetch the user's profile image on component mount
+  // Fetch user data when the component mounts
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        try {
-          console.log("Fetching profile for user:", user.uid);
-          const userRef = doc(db, "users", user.uid);
-          const userDoc = await getDoc(userRef);
-          
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const userDocRef = doc(db, 'users', currentUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data() as UserData;
+            setUserName(userData.name || '');
+            
+            // Also get profile image if it exists
             if (userData.profileImage) {
               setProfileImage(userData.profileImage);
               console.log("Profile image loaded from Firestore");
             }
-            if (userData.userName) {
-              setUserName(userData.userName);
-            }
-          } else {
-            console.log("No user document exists yet");
           }
-        } catch (error) {
-          console.error("Error fetching profile:", error);
         }
-      } else {
-        console.log("No authenticated user found during profile fetch");
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchUserProfile();
+    fetchUserData();
   }, []);
 
   // Image picker function
@@ -163,19 +168,19 @@ const Profile = () => {
   return (
     <ScreenWrapper>
       <SafeAreaView style={styles.container}>
-        <ScrollView 
+        <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 100 }}
         >
           <View style={styles.profileInfo}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.avatarContainer, { width: avatarSize, height: avatarSize }]}
               onPress={pickImage}
               onPressIn={() => setShowOverlay(true)}
               onPressOut={() => setShowOverlay(false)}
             >
-              <Image 
-                source={profileImage ? { uri: profileImage } : require('../../assets/images/avatar.png')} 
+              <Image
+                source={profileImage ? { uri: profileImage } : require('../../assets/images/avatar.png')}
                 style={[styles.avatar, { width: avatarSize, height: avatarSize }]}
               />
               {showOverlay && (
@@ -184,10 +189,12 @@ const Profile = () => {
                 </View>
               )}
             </TouchableOpacity>
-            <Text style={[styles.userName, { fontSize: headerFontSize }]}>{userName}</Text>
+            <Text style={[styles.userName, { fontSize: headerFontSize }]}>
+              {loading ? 'Loading...' : (userName || 'User')}
+            </Text>
             <View style={styles.verifiedContainer}>
-              <Image 
-                source={require('../../assets/images/verify-icon.png')} 
+              <Image
+                source={require('../../assets/images/verify-icon.png')}
                 style={styles.verifyIcon}
               />
               <Text style={[styles.verifiedText, { fontSize: fontSize * 0.9 }]}>Verified</Text>
@@ -195,32 +202,32 @@ const Profile = () => {
           </View>
 
           <View style={styles.menuOptions}>
-            <TouchableOpacity 
-              style={[styles.menuItem, { width: menuWidth }]} 
+            <TouchableOpacity
+              style={[styles.menuItem, { width: menuWidth }]}
               onPress={() => router.push("/(profile)/settings")}
             >
               <Image source={require('../../assets/images/settings-icon.png')} />
               <Text style={[styles.menuText, { fontSize: fontSize }]}>Settings</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[styles.menuItem, { width: menuWidth }]}
               onPress={() => router.push('../other/reminders')}
             >
               <Image source={require('../../assets/images/reminders-icon.png')} />
               <Text style={[styles.menuText, { fontSize: fontSize }]}>Reminders</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.menuItem, { width: menuWidth }]} 
+
+            <TouchableOpacity
+              style={[styles.menuItem, { width: menuWidth }]}
               onPress={() => router.push("/(profile)/subscription")}
             >
               <Image source={require('../../assets/images/premium-icon.png')} />
               <Text style={[styles.menuText, { fontSize: fontSize }]}>Premium</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.menuItem, { width: menuWidth }]} 
+
+            <TouchableOpacity
+              style={[styles.menuItem, { width: menuWidth }]}
               onPress={() => Linking.openURL("https://www.cartrackapp.online")}
             >
               <Image source={require('../../assets/images/Help-and-support-icon.png')} />
