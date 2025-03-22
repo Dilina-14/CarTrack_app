@@ -28,7 +28,7 @@ import { router } from "expo-router";
 
 import { getAuth } from "firebase/auth";
 import { getFirestore, collection, query, where, onSnapshot, deleteDoc, doc } from "firebase/firestore";
-import { app } from "../../firebaseAuth"; // Adjust the path to your Firebase config file
+import { app } from "../../../firebaseAuth"; // Adjust the path to your Firebase config file
 import TopBar from "@/components/TopBar";
 import ScreenWrapper from "@/components/ScreenWrapper";
 
@@ -400,7 +400,7 @@ const Index = () => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push("/(tabs)/marketplace")}>
+          <TouchableOpacity onPress={() => router.push("./(tabs)/marketplace")}>
             <View style={[styles.iconContainer, { borderColor: "#FF474A" }]}>
               <ShoppingCart size={43} color="#FF474A" weight="bold" />
               <Text style={[styles.iconText, { color: "#FF474A" }]}>Shop</Text>
@@ -416,7 +416,7 @@ const Index = () => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push("/(tabs)/news")}>
+          <TouchableOpacity onPress={() => router.push("./(tabs)/news")}>
             <View style={[styles.iconContainer, { borderColor: "#A020F0" }]}>
               <Newspaper size={43} color="#A020F0" weight="bold" />
               <Text style={[styles.iconText, { color: "#A020F0" }]}>News</Text>

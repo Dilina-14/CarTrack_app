@@ -175,7 +175,7 @@ const Profile = () => {
               onPressOut={() => setShowOverlay(false)}
             >
               <Image 
-                source={profileImage ? { uri: profileImage } : require('../../assets/images/avatar.png')} 
+                source={profileImage ? { uri: profileImage } : require('../../../assets/images/avatar.png')} 
                 style={[styles.avatar, { width: avatarSize, height: avatarSize }]}
               />
               {showOverlay && (
@@ -187,7 +187,7 @@ const Profile = () => {
             <Text style={[styles.userName, { fontSize: headerFontSize }]}>{userName}</Text>
             <View style={styles.verifiedContainer}>
               <Image 
-                source={require('../../assets/images/verify-icon.png')} 
+                source={require('../../../assets/images/verify-icon.png')} 
                 style={styles.verifyIcon}
               />
               <Text style={[styles.verifiedText, { fontSize: fontSize * 0.9 }]}>Verified</Text>
@@ -199,15 +199,15 @@ const Profile = () => {
               style={[styles.menuItem, { width: menuWidth }]} 
               onPress={() => router.push("/(profile)/settings")}
             >
-              <Image source={require('../../assets/images/settings-icon.png')} />
+              <Image source={require('../../../assets/images/settings-icon.png')} />
               <Text style={[styles.menuText, { fontSize: fontSize }]}>Settings</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={[styles.menuItem, { width: menuWidth }]}
-              onPress={() => router.push('../other/reminders')}
+              onPress={() => router.push('../../other/reminders')}
             >
-              <Image source={require('../../assets/images/reminders-icon.png')} />
+              <Image source={require('../../../assets/images/reminders-icon.png')} />
               <Text style={[styles.menuText, { fontSize: fontSize }]}>Reminders</Text>
             </TouchableOpacity>
             
@@ -215,7 +215,7 @@ const Profile = () => {
               style={[styles.menuItem, { width: menuWidth }]} 
               onPress={() => router.push("/(profile)/subscription")}
             >
-              <Image source={require('../../assets/images/premium-icon.png')} />
+              <Image source={require('../../../assets/images/premium-icon.png')} />
               <Text style={[styles.menuText, { fontSize: fontSize }]}>Premium</Text>
             </TouchableOpacity>
             
@@ -223,7 +223,7 @@ const Profile = () => {
               style={[styles.menuItem, { width: menuWidth }]} 
               onPress={() => Linking.openURL("https://www.cartrackapp.online")}
             >
-              <Image source={require('../../assets/images/Help-and-support-icon.png')} />
+              <Image source={require('../../../assets/images/Help-and-support-icon.png')} />
               <Text style={[styles.menuText, { fontSize: fontSize }]}>Help & Support</Text>
             </TouchableOpacity>
             
@@ -231,7 +231,7 @@ const Profile = () => {
               style={[styles.deleteItem, { width: menuWidth }]} 
               onPress={handleLogout}
             >
-              <Image source={require('../../assets/images/settings-page/logout-icon.png')} />
+              <Image source={require('../../../assets/images/settings-page/logout-icon.png')} />
               <Text style={[styles.deleteText, { fontSize: fontSize }]}>Logout</Text>
             </TouchableOpacity>
           </View>
