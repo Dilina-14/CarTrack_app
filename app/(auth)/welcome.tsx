@@ -5,6 +5,7 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import Typo from "@/components/Typo";
 import { colors, spacingX } from "@/constants/theme";
 import { verticalScale } from "@/utils/styling";
+import '../../firebaseAuth';
 
 const Welcome = () => {
   const router = useRouter();

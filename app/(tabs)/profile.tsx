@@ -25,22 +25,19 @@ const Profile = () => {
 
   // Image picker function
   const pickImage = async () => {
-    // Request permission
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
     if (status !== 'granted') {
       alert('Sorry, we need camera roll permissions to change your profile picture!');
       return;
     }
-    
-    // Launch image picker
+
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
     });
-    
+
     if (!result.canceled) {
       setProfileImage(result.assets[0].uri);
     }
@@ -113,7 +110,7 @@ const Profile = () => {
             
             <TouchableOpacity 
               style={[styles.menuItem, { width: menuWidth }]} 
-              onPress={() => router.push("/(profile)/help-and-support")}
+              onPress={() => Linking.openURL("https://www.cartrackapp.online")}
             >
               <Image source={require('../../assets/images/Help-and-support-icon.png')} />
               <Text style={[styles.menuText, { fontSize: fontSize }]}>Help & Support</Text>
@@ -217,27 +214,5 @@ const styles = StyleSheet.create({
   deleteText: {
     color: '#FF5252',
     marginLeft: 15,
-  },
-  tabBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly', 
-    alignItems: 'center',
-    backgroundColor: '#1E1E1E',
-    borderTopWidth: 1,
-    borderTopColor: '#333',
-    paddingVertical: 15,
-    width: '100%', 
-    position: 'absolute', 
-    bottom: 0,
-  },
-  tabItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-  },
-  activeTab: {
-    borderTopWidth: 2,
-    borderTopColor: '#4CAF50',
-    paddingTop: 13,
   },
 });
