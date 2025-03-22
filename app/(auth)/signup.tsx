@@ -59,6 +59,11 @@ export default function signup() {
     }
     setPhoneError('');
 
+    if (!form.name.trim()) {
+      Alert.alert('Signup Failed', 'Please enter your full name.');
+      return;
+    }
+
     setIsLoading(true); // Start loading
 
     try {
@@ -74,6 +79,7 @@ export default function signup() {
       const userRef = doc(db, "users", user.uid);
       
       await setDoc(userRef, {
+        name: form.name.trim(), // Save the name to Firestore
         email: form.email,
         phoneNumber: form.phoneNumber
       });
