@@ -3,6 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA8mfb-X8k6FZPcKPvuolLxm0A6HPfUkMQ",
@@ -17,14 +18,10 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+
 // Initialize services
 const auth = getAuth(app);
 const db = getFirestore(app);
-let analytics = null;
 
-// Only initialize analytics on web platforms
-if (typeof window !== 'undefined') {
-  analytics = getAnalytics(app);
-}
 
-export { auth, db, analytics };
+export { auth, db};
