@@ -19,7 +19,9 @@ import {
   Car,
   GasPump,
   FileText,
-  Wrench
+  Wrench,
+  Trash,
+  X
 } from "phosphor-react-native";
 import { colors } from "@/constants/theme";
 import { router } from "expo-router";
@@ -159,13 +161,28 @@ const ExpenseList = () => {
         animationType="fade"
         onRequestClose={() => setModalVisible(false)} // Close modal when background is touched
       >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setModalVisible(false)} // Close modal on background press
-        >
+        <View style={styles.modalOverlay}>
+          {/* Background Pressable */}
+          <Pressable
+            style={styles.modalOverlayPressable}
+            onPress={() => setModalVisible(false)} // Close modal on background press
+          />
+
+          {/* Close Icon */}
+          <Pressable
+            style={styles.closeIcon}
+            onPress={() => setModalVisible(false)} // Close modal when "X" is pressed
+          >
+            <X size={24} color="white" weight="bold" /> {/* Close Icon */}
+          </Pressable>
+
+          {/* Modal Content */}
           <View style={styles.modalContainer}>
             {selectedExpense && (
-              <>
+              <ScrollView
+                contentContainerStyle={styles.modalScrollContent}
+                nestedScrollEnabled={true} // Allow nested scrolling
+              >
                 {/* Icon and Details */}
                 <View style={styles.modalHeader}>
                   <View
@@ -207,10 +224,21 @@ const ExpenseList = () => {
                 <Text style={styles.modalDescription}>
                   {selectedExpense.note || "No description available"}
                 </Text>
-              </>
+
+                {/* Delete Button */}
+                <Pressable
+                  style={styles.deleteButton}
+                  onPress={() => {
+                    handleDeleteExpense(selectedExpense.id); // Delete the selected expense
+                    setModalVisible(false); // Hide the modal
+                  }}
+                >
+                  <Trash size={24} color="white" weight="bold" /> {/* Trash Icon */}
+                </Pressable>
+              </ScrollView>
             )}
           </View>
-        </Pressable>
+        </View>
       </Modal>
     </View>
   );
@@ -505,14 +533,23 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
   },
+  //model content
+  modalScrollContent: {
+    flexGrow: 1, // Allow the content to grow and be scrollable
+    alignItems: "center", // Center the content horizontally
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.75)", // Semi-transparent background
+    justifyContent: "center", // Center the modal vertically
+    alignItems: "center", // Center the modal horizontally
+  },
+  modalOverlayPressable: {
+    ...StyleSheet.absoluteFillObject, // Cover the entire screen
   },
   modalContainer: {
     width: 350,
+    maxHeight: "80%", // Limit the height to 80% of the screen
     backgroundColor: "#1E1E1E",
     borderRadius: 30,
     padding: 20,
@@ -561,6 +598,27 @@ const styles = StyleSheet.create({
     textAlign: "center", // Center the text
     marginTop: 10, // Add some spacing above the text
   },
+  deleteButton: {
+    backgroundColor: "black", // Black background
+    borderWidth: 2, // Thick white border
+    borderColor: "white",
+    borderRadius: 10,
+    padding: 10, // Padding for the button
+    alignSelf: "center", // Center the button horizontally
+    marginTop: 20, // Add spacing above the button
+    justifyContent: "center", // Center the icon vertically
+    alignItems: "center", // Center the icon horizontally
+  },
+closeIcon: {
+  position: "absolute",
+  top: 10, // Position it at the top of the modal container
+  right: 10, // Position it at the right of the modal container
+  width: 80, // Fixed width
+  height: 60, // Fixed height
+  justifyContent: "center", // Center the "X" vertically
+  alignItems: "center", // Center the "X" horizontally
+  zIndex: 10, // Ensure it appears above the modal content
+},
 });
   
 
