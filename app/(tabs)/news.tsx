@@ -3,6 +3,7 @@ import React from 'react';
 import ScreenWrapper from '@/components/ScreenWrapper';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
+import TopBar from '@/components/TopBar';
 
 // Define the type for the news item
 type NewsItemProps = {
@@ -13,6 +14,7 @@ type NewsItemProps = {
   distance?: string;
   imageUri: string;
 };
+
 
 const NewsCard = ({ title, date, author, distance, imageUri, newsId }: NewsItemProps) => {
   const router = useRouter();
@@ -52,6 +54,7 @@ const News = () => {
     <ScreenWrapper>
       <SafeAreaView style={styles.container}>
         {/* Header */}
+        <TopBar onMenuPress={() => console.log("Menu pressed")} />
         <View style={styles.header}>
           <Text style={styles.headerTitle}>News</Text>
         </View>

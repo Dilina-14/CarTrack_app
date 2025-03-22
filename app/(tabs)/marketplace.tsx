@@ -14,6 +14,7 @@ import { Funnel, MagnifyingGlass } from "phosphor-react-native";
 import { useRouter } from "expo-router";
 import ScreenWrapper from '@/components/ScreenWrapper';
 import { colors } from '@/constants/theme';
+import TopBar from '@/components/TopBar';
 
 // Sample data
 const DATA = [
@@ -250,6 +251,7 @@ const Marketplace = () => {
 
   return (
     <ScreenWrapper>
+      <TopBar onMenuPress={() => console.log("Menu pressed")} />
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <SearchBar />
