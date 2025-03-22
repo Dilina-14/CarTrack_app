@@ -1,13 +1,13 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View, Dimensions, SafeAreaView, ScrollView, Switch } from "react-native";
 import React, { useEffect, useState } from "react";
 import ScreenWrapper from "@/components/ScreenWrapper";
-import { colors, spacingX } from "@/constants/theme";
+import { colors } from "@/constants/theme";
 import { useRouter } from "expo-router";
 import { useTailwind } from 'tailwind-rn';
 import { Linking } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 
-const settings = () => {
+const Settings = () => {
     const router = useRouter();
     const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
     const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
@@ -29,7 +29,6 @@ const settings = () => {
     const menuWidth = screenWidth * 0.9 > 368 ? 368 : screenWidth * 0.9;
     const fontSize = screenWidth * 0.04 > 16 ? 16 : screenWidth * 0.04;
     const switchScale = menuWidth / 368;
-    const switchWidth = Math.min(51 * switchScale, 51); 
     
     return (
         <ScreenWrapper>
@@ -60,34 +59,40 @@ const settings = () => {
                             />
                         </View>
                         
-
-                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]}>
-
-                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} onPress={() => Linking.openURL("https://www.cartrackapp.online")}>
-
-                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} >
-
+                        <TouchableOpacity 
+                            style={[styles.menuItem, { width: menuWidth }]} 
+                            onPress={() => Linking.openURL("https://www.cartrackapp.online")}
+                        >
                             <View style={styles.iconTextContainer}>
                                 <Ionicons name="share-social-outline" size={24} color="white" />
                                 <Text style={[styles.menuText, { fontSize: fontSize }]}>Share App</Text>
                             </View>
                         </TouchableOpacity>
                         
-                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} onPress={() => router.push("/other/TermsAndConditions")}>
+                        <TouchableOpacity 
+                            style={[styles.menuItem, { width: menuWidth }]} 
+                            onPress={() => router.push("/other/TermsAndConditions")}
+                        >
                             <View style={styles.iconTextContainer}>
                                 <Ionicons name="document-text-outline" size={24} color="white" />
                                 <Text style={[styles.menuText, { fontSize: fontSize }]}>Terms and Conditions</Text>
                             </View>
                         </TouchableOpacity>
                         
-                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} onPress={() => Linking.openURL("https://www.cartrackapp.online")}>
+                        <TouchableOpacity 
+                            style={[styles.menuItem, { width: menuWidth }]} 
+                            onPress={() => Linking.openURL("https://www.cartrackapp.online")}
+                        >
                             <View style={styles.iconTextContainer}>
                                 <Ionicons name="mail-outline" size={24} color="white" />
                                 <Text style={[styles.menuText, { fontSize: fontSize }]}>Feedback & Contact</Text>
                             </View>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={[styles.menuItem, { width: menuWidth }]} onPress={() => router.push("/(auth)/login")}>
+                        <TouchableOpacity 
+                            style={[styles.menuItem, { width: menuWidth }]} 
+                            onPress={() => router.push("/(auth)/login")}
+                        >
                             <View style={styles.iconTextContainer}>
                                 <Ionicons name="trash-outline" size={22} color="#FF5252" />
                                 <Text style={[styles.deleteText, { fontSize: fontSize }]}>Delete Account</Text>
@@ -100,7 +105,7 @@ const settings = () => {
     );
 };
 
-export default settings;
+export default Settings;
 
 const styles = StyleSheet.create({
     container: {
