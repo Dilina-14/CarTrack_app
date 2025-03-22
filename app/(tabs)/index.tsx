@@ -26,9 +26,14 @@ import {
 import { colors } from "@/constants/theme";
 import { router } from "expo-router";
 
+import { getAuth } from "firebase/auth";
+import { getFirestore, collection, query, where, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+import { app } from "../../firebaseAuth"; // Adjust the path to your Firebase config file
+
+
 // Define the type for expense items
 type ExpenseItem = {
-  id: string; // Add a unique identifier
+  id: string; // Firestore document ID
   category: string;
   date: string;
   amount: string;
@@ -37,22 +42,42 @@ type ExpenseItem = {
 // Expense List Component
 const ExpenseList = () => {
   const [expenseItems, setExpenseItems] = useState<ExpenseItem[]>([]);
-  const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(null); // State for selected expense
-  const [modalVisible, setModalVisible] = useState(false); // State for modal visibility
+  const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    const fetchExpenses = async () => {
-      try {
-        const storedExpenses = await AsyncStorage.getItem("expenses");
-        if (storedExpenses) {
-          setExpenseItems(JSON.parse(storedExpenses));
-        }
-      } catch (error) {
-        console.error("Error retrieving expenses:", error);
-      }
-    };
+    const auth = getAuth();
+    const user = auth.currentUser;
 
-    fetchExpenses();
+    if (!user) {
+      console.error("User not authenticated");
+      return;
+    }
+
+    const userId = user.uid;
+
+    // Fetch expenses from Firestore
+    const db = getFirestore(app);
+    const expensesRef = collection(db, "expenses");
+    const q = query(expensesRef, where("userId", "==", userId)); // Filter by user ID
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const expenses: ExpenseItem[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        expenses.push({
+          id: doc.id, // Use Firestore document ID
+          category: data.category,
+          date: data.date,
+          amount: data.amount.toString(),
+          note: data.note,
+        });
+      });
+      setExpenseItems(expenses);
+    });
+
+    // Removed redundant fetchExpenses() call
+    return () => unsubscribe();
   }, []);
 
   const handleExpensePress = (expense: ExpenseItem) => {
@@ -62,9 +87,8 @@ const ExpenseList = () => {
 
   const handleDeleteExpense = async (id: string) => {
     try {
-      const updatedExpenses = expenseItems.filter((item) => item.id !== id);
-      setExpenseItems(updatedExpenses);
-      await AsyncStorage.setItem("expenses", JSON.stringify(updatedExpenses));
+      const db = getFirestore(app);
+      await deleteDoc(doc(db, "expenses", id)); // Delete the document by ID
       console.log("Expense deleted successfully!");
     } catch (error) {
       console.error("Error deleting expense:", error);
@@ -150,9 +174,7 @@ const ExpenseList = () => {
             </Pressable>
           ))
         )}
-        {expenseItems.length > 0 && (
-          <Text style={styles.instructionText}>Hold to delete items</Text>
-        )}
+
       </ScrollView>
       
       <Modal
@@ -244,32 +266,74 @@ const ExpenseList = () => {
   );
 };
 
-// Expense Graph Component
 const ExpenseGraph = () => {
-  
-  const barData = [
-    { value: 15.3, key: "1" },
-    { value: 17.8, key: "2" },
-    { value: 12.4, key: "3" },
-    { value: 20.1, key: "4" },
-    { value: 14.9, key: "5" },
-    { value: 18.2, key: "6" },
-    { value: 22.3, key: "7" },
-  ];
+  const [fuelExpenses, setFuelExpenses] = useState<number[]>([]);
+  const [totalExpenditure, setTotalExpenditure] = useState<number>(0);
+  const [averageDailySpending, setAverageDailySpending] = useState<number>(0);
 
-  const maxValue = Math.max(...barData.map((item) => item.value));
+  useEffect(() => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
+      console.error("User not authenticated");
+      return;
+    }
+
+    const userId = user.uid;
+
+    // Fetch fuel expenses from Firestore
+    const db = getFirestore(app);
+    const expensesRef = collection(db, "expenses");
+    const q = query(
+      expensesRef,
+      where("userId", "==", userId),
+      where("category", "==", "Fuel") // Filter by fuel expenses
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const expenses: number[] = [];
+      let total = 0;
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const amount = parseFloat(data.amount);
+        expenses.push(amount);
+        total += amount;
+      });
+
+      setFuelExpenses(expenses);
+      setTotalExpenditure(total);
+
+
+      const days = 30; // 30 day per month
+      const average = total / days;
+      setAverageDailySpending(average);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
+
+  // Generate bar data for the graph
+  const barData = fuelExpenses.map((amount, index) => ({
+    value: amount,
+    key: index.toString(),
+  }));
+
+  const maxValue = Math.max(...barData.map((item) => item.value), 1); // Ensure maxValue is at least 1
 
   return (
     <View style={styles.graphContainer}>
-      <Text style={styles.graphTitle}>Fuel Expense</Text>
+      <Text style={styles.graphTitle}>Fuel Expense - Monthly</Text>
 
       {/* Graph */}
       <View style={styles.chartArea}>
         <View style={styles.yAxisLabels}>
-          <Text style={styles.axisLabel}>23.1k</Text>
-          <Text style={styles.axisLabel}>20.2k</Text>
-          <Text style={styles.axisLabel}>15.3k</Text>
-          <Text style={styles.axisLabel}>10.5k</Text>
+          <Text style={styles.axisLabel}>{maxValue.toFixed(1)}k</Text>
+          <Text style={styles.axisLabel}>{(maxValue * 0.75).toFixed(1)}k</Text>
+          <Text style={styles.axisLabel}>{(maxValue * 0.5).toFixed(1)}k</Text>
+          <Text style={styles.axisLabel}>{(maxValue * 0.25).toFixed(1)}k</Text>
         </View>
 
         <View style={styles.chartContent}>
@@ -301,12 +365,12 @@ const ExpenseGraph = () => {
       <View style={styles.expenseSummary}>
         <View>
           <Text style={styles.expenseLabel}>Total Expenditure</Text>
-          <Text style={styles.expenseValue}>LKR.56,699</Text>
+          <Text style={styles.expenseValue}>LKR.{totalExpenditure.toFixed(2)}</Text>
         </View>
 
         <View>
           <Text style={styles.expenseLabel}>Average Daily Spending</Text>
-          <Text style={styles.expenseValue}>LKR.769.42</Text>
+          <Text style={styles.expenseValue}>LKR.{averageDailySpending.toFixed(2)}</Text>
         </View>
       </View>
     </View>
@@ -621,7 +685,5 @@ closeIcon: {
 },
 });
   
-
-
 
 export default Index;
