@@ -6,6 +6,14 @@ import { useRouter } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { Linking } from "react-native";
+import { auth, db } from '@/firebaseAuth';
+import { doc, getDoc, DocumentData } from 'firebase/firestore';
+
+interface UserData {
+  name: string;
+  email: string;
+  phoneNumber: string;
+}
 
 const Profile = () => {
   const router = useRouter();
@@ -13,6 +21,8 @@ const Profile = () => {
   const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
+  const [userName, setUserName] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Update dimensions on orientation changes
   useEffect(() => {
@@ -21,6 +31,31 @@ const Profile = () => {
       setScreenHeight(window.height);
     });
     return () => subscription?.remove();
+  }, []);
+
+  // Fetch user data when the component mounts
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const userDocRef = doc(db, 'users', currentUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data() as UserData;
+            setUserName(userData.name || '');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
   }, []);
 
   // Image picker function
@@ -52,19 +87,19 @@ const Profile = () => {
   return (
     <ScreenWrapper>
       <SafeAreaView style={styles.container}>
-        <ScrollView 
+        <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 100 }}
         >
           <View style={styles.profileInfo}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.avatarContainer, { width: avatarSize, height: avatarSize }]}
               onPress={pickImage}
               onPressIn={() => setShowOverlay(true)}
               onPressOut={() => setShowOverlay(false)}
             >
-              <Image 
-                source={profileImage ? { uri: profileImage } : require('../../assets/images/avatar.png')} 
+              <Image
+                source={profileImage ? { uri: profileImage } : require('../../assets/images/avatar.png')}
                 style={[styles.avatar, { width: avatarSize, height: avatarSize }]}
               />
               {showOverlay && (
@@ -73,10 +108,12 @@ const Profile = () => {
                 </View>
               )}
             </TouchableOpacity>
-            <Text style={[styles.userName, { fontSize: headerFontSize }]}>Vidusha.W</Text>
+            <Text style={[styles.userName, { fontSize: headerFontSize }]}>
+              {loading ? 'Loading...' : (userName || 'User')}
+            </Text>
             <View style={styles.verifiedContainer}>
-              <Image 
-                source={require('../../assets/images/verify-icon.png')} 
+              <Image
+                source={require('../../assets/images/verify-icon.png')}
                 style={styles.verifyIcon}
               />
               <Text style={[styles.verifiedText, { fontSize: fontSize * 0.9 }]}>Verified</Text>
@@ -84,40 +121,40 @@ const Profile = () => {
           </View>
 
           <View style={styles.menuOptions}>
-            <TouchableOpacity 
-              style={[styles.menuItem, { width: menuWidth }]} 
+            <TouchableOpacity
+              style={[styles.menuItem, { width: menuWidth }]}
               onPress={() => router.push("/(profile)/settings")}
             >
               <Image source={require('../../assets/images/settings-icon.png')} />
               <Text style={[styles.menuText, { fontSize: fontSize }]}>Settings</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[styles.menuItem, { width: menuWidth }]}
               onPress={() => router.push('../other/reminders')}
             >
               <Image source={require('../../assets/images/reminders-icon.png')} />
               <Text style={[styles.menuText, { fontSize: fontSize }]}>Reminders</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.menuItem, { width: menuWidth }]} 
+
+            <TouchableOpacity
+              style={[styles.menuItem, { width: menuWidth }]}
               onPress={() => router.push("/(profile)/subscription")}
             >
               <Image source={require('../../assets/images/premium-icon.png')} />
               <Text style={[styles.menuText, { fontSize: fontSize }]}>Premium</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.menuItem, { width: menuWidth }]} 
+
+            <TouchableOpacity
+              style={[styles.menuItem, { width: menuWidth }]}
               onPress={() => Linking.openURL("https://www.cartrackapp.online")}
             >
               <Image source={require('../../assets/images/Help-and-support-icon.png')} />
               <Text style={[styles.menuText, { fontSize: fontSize }]}>Help & Support</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.deleteItem, { width: menuWidth }]} 
+
+            <TouchableOpacity
+              style={[styles.deleteItem, { width: menuWidth }]}
               onPress={() => router.push("/(auth)/login")}
             >
               <Image source={require('../../assets/images/settings-page/logout-icon.png')} />
