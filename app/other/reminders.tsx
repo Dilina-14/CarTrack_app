@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 10,
     marginBottom: 20,
-    fontFamily: 'monospace',
+    fontFamily: 'Poppins_700Bold',
   },
   remindersList: {
     paddingHorizontal: 20,
