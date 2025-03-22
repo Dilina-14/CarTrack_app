@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
     formContainer: {      
       backgroundColor: '#1E1E1E', 
       padding: 25,
-      marginTop: -20,
+      marginTop: -25,
       borderRadius: 30, 
     },
     title: {
@@ -31,13 +31,14 @@ const styles = StyleSheet.create({
     header: {
       alignItems: 'center',
       justifyContent: 'center',
-      marginVertical: 36,
+      marginVertical: 3,
+      marginTop: -1+5,
     },
     headerImg: {
-      width: 200,
-      height: 170,
+      width: 170,
+      height: 140,
       alignSelf: 'center',
-      marginBottom: 40,
+      marginBottom: 20,
     },
    
     form: {

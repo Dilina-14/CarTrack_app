@@ -11,10 +11,14 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
-import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import styles from "./../styles/authStyle";
+
+// Import Firebase services
+import { auth } from '../../firebaseAuth'; // Update this path to match your project structure
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export default function login() {
   const router = useRouter();  
@@ -26,6 +30,7 @@ export default function login() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
  
   const handleLogin = async () => {
     router.push("/(tabs)")
@@ -73,38 +78,62 @@ export default function login() {
       return;
     }
   
+    setIsLoading(true); // Start loading
+    
     try { 
-      // Call the login API
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
-        email: form.email,
-        password: form.password,
-      });
+      // Use Firebase authentication
+      await signInWithEmailAndPassword(auth, form.email, form.password);
   
       // If login is successful, show a success message
-      Alert.alert('Success', 'Login successful!');
-      console.log('User:', response.data.user);
+      console.log('User logged in successfully');
   
       // Navigate to the next screen
       router.push('/(tabs)');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
       
-      // Handle network errors
-      if ((error as any).message && (error as any).message.includes('Network Error')) {
+      // Handle Firebase authentication errors
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        setError('Invalid email or password');
+        Alert.alert('Error', 'Invalid email or password');
+      } else if (error.code === 'auth/too-many-requests') {
+        setError('Too many failed login attempts. Please try again later');
+        Alert.alert('Error', 'Too many failed login attempts. Please try again later');
+      } else if (error.code === 'auth/network-request-failed') {
         Alert.alert(
           'Connection Error',
           'Could not connect to the server. Please check your connection or try again later.'
         );
       } else {
-        // Regular authentication error
-        setError('Invalid email or password');
-        Alert.alert('Error', 'Invalid email or password');
+        // Other authentication errors
+        setError('Authentication failed. Please try again.');
+        Alert.alert('Error', 'Authentication failed. Please try again.');
       }
+    } finally {
+      setIsLoading(false); // End loading regardless of outcome
     }
   };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#e8ecf4' }}>
+      {/* Loading Overlay */}
+      {isLoading && (
+        <View style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: 0,
+          bottom: 0,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          zIndex: 1000,
+        }}>
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text style={{ marginTop: 10, color: '#ffffff', fontSize: 16 }}>Logging in...</Text>
+        </View>
+      )}
+      
       <KeyboardAvoidingView
         behavior={Platform.OS === "android" ? "padding" : "height"}
         style={{ flex: 1 }}>
@@ -138,7 +167,9 @@ export default function login() {
                     styles.inputControl,
                     { color: '#fff', borderColor: error ? 'red' : '#C9D3DB' },
                   ]}
-                  value={form.email} />
+                  value={form.email}
+                  editable={!isLoading} // Disable while loading
+                />
               </View>
               
               <View style={styles.input}>
@@ -152,10 +183,14 @@ export default function login() {
                     placeholderTextColor="#6b7280"
                     style={[styles.inputControl, { color: '#fff' }]}
                     secureTextEntry={!showPassword}
-                    value={form.password} />
+                    value={form.password}
+                    editable={!isLoading} // Disable while loading
+                  />
                   <TouchableOpacity
                     onPress={() => setShowPassword(!showPassword)}
-                    style={styles.eyeIcon}>
+                    style={styles.eyeIcon}
+                    disabled={isLoading} // Disable while loading
+                  >
                     <Icon name={showPassword ? "eye" : "eye-off"} size={24} color="#6b7280" />
                   </TouchableOpacity>
                 </View>
@@ -167,20 +202,32 @@ export default function login() {
                 </Text>
               ) : null}
 
-              <TouchableOpacity onPress={() => {}}>
-                <Text style={styles.formLink}>Forgot password?</Text>
+              <TouchableOpacity onPress={() => {}} disabled={isLoading}>
+                <Text style={[styles.formLink, isLoading && { opacity: 0.7 }]}>
+                  Forgot password?
+                </Text>
               </TouchableOpacity>
 
               <View style={styles.formAction}>
-                <TouchableOpacity onPress={handleLogin}>
-                  <View style={styles.btn}>
-                    <Text style={styles.btnText}>Log In</Text>
+                <TouchableOpacity onPress={handleLogin} disabled={isLoading}>
+                  <View style={[
+                    styles.btn,
+                    isLoading && { opacity: 0.7 } // Dim the button while loading
+                  ]}>
+                    {isLoading ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <Text style={styles.btnText}>Log In</Text>
+                    )}
                   </View>
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
-                <Text style={styles.formFooter}>
+              <TouchableOpacity 
+                onPress={() => router.push("/(auth)/signup")}
+                disabled={isLoading}
+              >
+                <Text style={[styles.formFooter, isLoading && { opacity: 0.7 }]}>
                   Don't have an account?{' '}
                   <Text style={{ textDecorationLine: 'underline' }}>Sign up</Text>
                 </Text>
