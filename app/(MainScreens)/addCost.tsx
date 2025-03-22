@@ -5,6 +5,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage'; // ✅ CHANGED
 
+import { getAuth } from "firebase/auth";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { app } from "../../firebaseAuth"; 
+
 const AddCost = () => {
   const [category, setCategory] = useState("Fuel");
   const [date, setDate] = useState(new Date());
@@ -26,51 +30,58 @@ const AddCost = () => {
   const handleSave = async () => {
     let hasError = false;
     const newErrors = { date: "", amount: "" };
-
+  
     if (!date) {
       newErrors.date = "Date is required.";
       setDateBorderColor("red");
       hasError = true;
     }
-
+  
     if (!amount) {
       newErrors.amount = "Amount is required.";
       setAmountBorderColor("red");
       hasError = true;
     }
-
+  
     if (isNaN(Number(amount)) || Number(amount) <= 0) {
       newErrors.amount = "Enter a valid amount.";
       setAmountBorderColor("red");
       hasError = true;
     }
-
+  
     setErrors(newErrors);
-
+  
     if (!hasError) {
       try {
-        // ✅ CHANGED: Prepare data and save to AsyncStorage
-        const data = {
-          id: Date.now().toString(), // Use a timestamp as a unique identifier
+        // Get the current user's ID
+        const auth = getAuth();
+        const user = auth.currentUser;
+        const userId = user?.uid;
+  
+        if (!userId) {
+          throw new Error("User not authenticated");
+        }
+  
+        // Prepare expense data
+        const expenseData = {
           category,
           date: date.toISOString().split('T')[0],
-          amount,
+          amount: parseFloat(amount),
           note: note.trim() === "" ? "No description" : note.trim(),
+          userId, // Associate the expense with the user's ID
         };
-
-        // ✅ CHANGED: Save data locally using AsyncStorage
-        const existingData = JSON.parse(await AsyncStorage.getItem('expenses') || '[]');
-        if (!Array.isArray(existingData)) {
-          throw new Error("Invalid data in AsyncStorage");
-        }
-        existingData.push(data);
-        await AsyncStorage.setItem('expenses', JSON.stringify(existingData));
-        console.log("Data saved locally!");
-
+  
+        // Save to Firestore
+        const db = getFirestore(app);
+        const expensesRef = collection(db, "expenses");
+        await addDoc(expensesRef, expenseData);
+  
+        console.log("Expense saved to Firestore!");
+  
         // Navigate to the index in tabs
         router.push("/(tabs)");
       } catch (error) {
-        console.error("Error saving data:", error);
+        console.error("Error saving expense:", error);
       }
     }
   };
