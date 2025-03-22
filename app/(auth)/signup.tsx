@@ -87,7 +87,7 @@ export default function signup() {
       console.log("User registered successfully!");
       
       // Navigate to the main app screen
-      router.push('/(tabs)');
+      router.push('../(tabs)');
     } catch (error: any) {
       console.error("Error during signup:", error);
       
