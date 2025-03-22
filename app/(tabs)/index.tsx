@@ -29,6 +29,8 @@ import { router } from "expo-router";
 import { getAuth } from "firebase/auth";
 import { getFirestore, collection, query, where, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { app } from "../../firebaseAuth"; // Adjust the path to your Firebase config file
+import TopBar from "@/components/TopBar";
+import ScreenWrapper from "@/components/ScreenWrapper";
 
 
 // Define the type for expense items
@@ -379,9 +381,11 @@ const ExpenseGraph = () => {
 
 const Index = () => {
   return (
+    <ScreenWrapper>
+    <TopBar onMenuPress={() => console.log("Menu pressed")}/>
     <View style={styles.container}>
-      <Text style={styles.greeting}>Good Evening, Steve</Text>
       <ScrollView showsVerticalScrollIndicator={false}>
+        <Text style={styles.greeting}>Good Evening, Steve</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -426,6 +430,7 @@ const Index = () => {
 
       </ScrollView>
     </View>
+    </ScreenWrapper>
   );
 };
 
@@ -433,7 +438,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#121212",
-    paddingTop: 20,
+
   },
   greeting: {
     fontSize: 24,
