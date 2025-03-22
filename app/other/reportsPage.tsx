@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, TouchableOpacity, TextInput, Modal } from "react-native";
 import React from "react";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,12 +7,10 @@ import { Funnel, MagnifyingGlass } from "phosphor-react-native";
 import { colors } from '@/constants/theme';
 import { useRouter } from "expo-router";
 
-
-
 const reportsPage = () => {
-
   const router = useRouter();
-  // Data for reminders matching the image
+  const [isFilterModalVisible, setFilterModalVisible] = React.useState(false);
+
   const reminders = [
     {
       id: '1',
@@ -31,44 +29,59 @@ const reportsPage = () => {
     },
   ];
 
-  
   const navigation = useNavigation();
 
-  // SearchBar Component
+  const FilterModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isFilterModalVisible}
+      onRequestClose={() => setFilterModalVisible(false)}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Filter Options</Text>
+          <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
+            <Text style={styles.filterOption}>Option 1</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
+            <Text style={styles.filterOption}>Option 2</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
+            <Text style={styles.filterOption}>Option 3</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.closeButton} onPress={() => setFilterModalVisible(false)}>
+            <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
 
-
-  
   return (
     <ScreenWrapper>
       <View style={styles.container}>
-        
-        <View style={styles.headerContainer}>
-        </View>
-
-        {/* Reminders Title */}
+        <View style={styles.headerContainer}></View>
         <Text style={styles.header}>Vehicle Model Reports</Text>
 
-        
-      <View style={styles.searchBarContainer}>
-        <TouchableOpacity style={styles.filterButton}>
-          <Funnel size={24} color="white" weight="bold" />
-        </TouchableOpacity>
-        <View style={styles.searchContainer}>
-          <TextInput
-            placeholder="Search"
-            placeholderTextColor="gray"
-            style={styles.input}
-          />
-          <MagnifyingGlass size={20} color="black" />
+        <View style={styles.searchBarContainer}>
+          <TouchableOpacity style={styles.filterButton} onPress={() => setFilterModalVisible(true)}>
+            <Funnel size={24} color="white" weight="bold" />
+          </TouchableOpacity>
+          <View style={styles.searchContainer}>
+            <TextInput
+              placeholder="Search"
+              placeholderTextColor="gray"
+              style={styles.input}
+            />
+            <MagnifyingGlass size={20} color="black" />
+          </View>
         </View>
-      </View>
 
-
-        {/* List of Reminders */}
-        <ScrollView style={styles.remindersList}  >
+        <ScrollView style={styles.remindersList}>
           {reminders.map((item) => (
-            <View key={item.id} style={styles.reminderItem}  >
-              <TouchableOpacity  style={styles.reminderContent} onPress={() => router.push("/other/reports")}>
+            <View key={item.id} style={styles.reminderItem}>
+              <TouchableOpacity style={styles.reminderContent} onPress={() => router.push("/other/reports")}>
                 <View style={styles.bellIconContainer}>
                   <Ionicons name="document-outline" size={30} color="#fff" />
                 </View>
@@ -76,7 +89,7 @@ const reportsPage = () => {
                   <Text style={styles.reminderTitle}>{item.title}</Text>
                   <Text style={styles.reminderDate}>Uploaded Datee - {item.date}</Text>
                 </View>
-              </TouchableOpacity >
+              </TouchableOpacity>
               <TouchableOpacity style={styles.trashButton}>
                 <Ionicons name="heart-outline" size={20} color="#fff" />
                 <Text style={styles.heartCount}>69</Text>
@@ -84,6 +97,8 @@ const reportsPage = () => {
             </View>
           ))}
         </ScrollView>
+
+        <FilterModal />
       </View>
     </ScreenWrapper>
   );
@@ -202,5 +217,39 @@ const styles = StyleSheet.create({
       flex: 1,
       fontSize: 16,
       color: "#000",
+    },
+    modalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+      width: '80%',
+      backgroundColor: '#1e1e1e',
+      borderRadius: 10,
+      padding: 20,
+      alignItems: 'center',
+    },
+    modalTitle: {
+      fontSize: 18,
+      color: '#fff',
+      fontWeight: 'bold',
+      marginBottom: 20,
+    },
+    filterOption: {
+      fontSize: 16,
+      color: '#fff',
+      paddingVertical: 10,
+    },
+    closeButton: {
+      marginTop: 20,
+      backgroundColor: '#FF9D42',
+      padding: 10,
+      borderRadius: 5,
+    },
+    closeButtonText: {
+      fontSize: 16,
+      color: '#fff',
     },
 });
