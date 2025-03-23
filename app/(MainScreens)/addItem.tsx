@@ -8,9 +8,10 @@ import {
   ScrollView,
   Image,
   Alert,
+  KeyboardTypeOptions,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { getDatabase, ref, set, get, child } from 'firebase/database'; // For Firebase Realtime Database
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 
 const AddItem = () => {
@@ -25,24 +26,24 @@ const AddItem = () => {
   const [capacity, setCapacity] = useState('');
   const [mileage, setMileage] = useState('');
   const [contactNumber, setContactNumber] = useState('');
+  const [location, setLocation] = useState('');
+  const [price, setPrice] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const router = useRouter();
 
   const handleAddPhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images, // ✅ Use correct MediaTypeOptions
-        allowsEditing: true,
-        quality: 1,
-      });
-      
-    
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
 
     if (!result.canceled) {
       setImages([...images, result.assets[0].uri]);
     }
   };
 
-  const handleSubmit = async () => {
+  const validateForm = () => {
     if (
       !brand ||
       !model ||
@@ -54,48 +55,86 @@ const AddItem = () => {
       !fuelType ||
       !capacity ||
       !mileage ||
-      !contactNumber || // Ensure phoneNumber is filled
+      !contactNumber ||
+      !location ||
+      !price ||
       images.length === 0
     ) {
       Alert.alert('Error', 'Please fill in all fields and add at least one photo.');
-      return;
+      return false;
     }
 
-    try {
-      const db = getDatabase();
-      const dbRef = ref(db);
+    // Validate year (between 1900 and current year)
+    const currentYear = new Date().getFullYear();
+    const yearNumber = parseInt(year, 10);
+    if (isNaN(yearNumber) || yearNumber < 1900 || yearNumber > currentYear) {
+      Alert.alert('Error', `Year must be between 1900 and ${currentYear}`);
+      return false;
+    }
 
-      // Get the last ID from Firebase
-      const snapshot = await get(child(dbRef, 'marketplace'));
+    // Validate phone number (10 digits)
+    const phonePattern = /^\d{10}$/;
+    if (!phonePattern.test(contactNumber)) {
+      Alert.alert('Error', 'Contact number must be a valid 10-digit number.');
+      return false;
+    }
+
+    // Validate price and mileage (positive numbers)
+    if (isNaN(Number(price)) || Number(price) <= 0) {
+      Alert.alert('Error', 'Price must be a positive number.');
+      return false;
+    }
+    if (isNaN(Number(mileage)) || Number(mileage) <= 0) {
+      Alert.alert('Error', 'Mileage must be a positive number.');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    const newItem = {
+      brand,
+      model,
+      trim,
+      year,
+      condition,
+      transmission,
+      bodyType,
+      fuelType,
+      capacity,
+      mileage,
+      contactNumber,
+      location,
+      price,
+      imgUrl: images,
+      date: new Date(), // Add the current date
+    };
+
+    try {
+      const db = getFirestore();
+
+      // Get the last ID from Firestore
+      const marketplaceCollection = collection(db, 'marketplace');
+      const q = query(marketplaceCollection, orderBy('id', 'desc'), limit(1));
+      const snapshot = await getDocs(q);
+
       let newId = '00002'; // Default starting ID
-      if (snapshot.exists()) {
-        const items = snapshot.val();
-        const ids = Object.keys(items).map((id) => parseInt(id, 10));
-        const maxId = Math.max(...ids);
-        newId = String(maxId + 1).padStart(5, '0'); // Increment ID and pad with zeros
+      if (!snapshot.empty) {
+        const lastItem = snapshot.docs[0].data();
+        const lastId = parseInt(lastItem.id, 10);
+        newId = String(lastId + 1).padStart(5, '0'); // Increment ID and pad with zeros
       }
 
-      // Add the new item to Firebase
-      const newItem = {
-        id: newId,
-        brand,
-        model,
-        trim,
-        year,
-        condition,
-        transmission,
-        bodyType,
-        fuelType,
-        capacity,
-        mileage,
-        contactNumber, 
-        imgUrl: images,
-      };
+      console.log('Generated ID:', newId);
 
-      await set(ref(db, `marketplace/${newId}`), newItem);
+      // Add the new item to Firestore
+      await addDoc(marketplaceCollection, { id: newId, ...newItem });
 
       Alert.alert('Success', 'Item added successfully!');
-      router.push('/(tabs)/marketplace'); // Navigate back to the marketplace
+      router.push('/(drawer_tabs)/(tabs)/marketplace');
     } catch (error) {
       console.error('Error adding item:', error);
       Alert.alert('Error', 'Failed to add item. Please try again.');
@@ -107,86 +146,31 @@ const AddItem = () => {
       <Text style={styles.header}>Add New Item</Text>
 
       {/* Form Fields */}
-      <TextInput
-        style={styles.input}
-        placeholder="Brand"
-        placeholderTextColor="#aaa"
-        value={brand}
-        onChangeText={setBrand}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Model"
-        placeholderTextColor="#aaa"
-        value={model}
-        onChangeText={setModel}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Trim/ Edition"
-        placeholderTextColor="#aaa"
-        value={trim}
-        onChangeText={setTrim}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Year"
-        placeholderTextColor="#aaa"
-        keyboardType="numeric"
-        value={year}
-        onChangeText={setYear}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Condition"
-        placeholderTextColor="#aaa"
-        value={condition}
-        onChangeText={setCondition}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Transmission"
-        placeholderTextColor="#aaa"
-        value={transmission}
-        onChangeText={setTransmission}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Body Type"
-        placeholderTextColor="#aaa"
-        value={bodyType}
-        onChangeText={setBodyType}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Fuel Type"
-        placeholderTextColor="#aaa"
-        value={fuelType}
-        onChangeText={setFuelType}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Engine Capacity"
-        placeholderTextColor="#aaa"
-        value={capacity}
-        onChangeText={setCapacity}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Mileage"
-        placeholderTextColor="#aaa"
-        keyboardType="numeric"
-        value={mileage}
-        onChangeText={setMileage}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Contact Number"
-        placeholderTextColor="#aaa"
-        keyboardType="phone-pad"
-        value={contactNumber}
-        onChangeText={setContactNumber}
-      />
+      {[
+        { placeholder: 'Brand', value: brand, setter: setBrand },
+        { placeholder: 'Model', value: model, setter: setModel },
+        { placeholder: 'Trim/Edition', value: trim, setter: setTrim },
+        { placeholder: 'Year', value: year, setter: setYear, keyboardType: 'numeric' },
+        { placeholder: 'Condition', value: condition, setter: setCondition },
+        { placeholder: 'Transmission', value: transmission, setter: setTransmission },
+        { placeholder: 'Body Type', value: bodyType, setter: setBodyType },
+        { placeholder: 'Fuel Type', value: fuelType, setter: setFuelType },
+        { placeholder: 'Engine Capacity', value: capacity, setter: setCapacity },
+        { placeholder: 'Mileage', value: mileage, setter: setMileage, keyboardType: 'numeric' },
+        { placeholder: 'Contact Number', value: contactNumber, setter: setContactNumber, keyboardType: 'phone-pad' },
+        { placeholder: 'Location', value: location, setter: setLocation },
+        { placeholder: 'Price', value: price, setter: setPrice, keyboardType: 'numeric' },
+      ].map((input, index) => (
+        <TextInput
+          key={index}
+          style={styles.input}
+          placeholder={input.placeholder}
+          placeholderTextColor="#aaa"
+          value={input.value}
+          onChangeText={input.setter}
+          keyboardType={input.keyboardType as KeyboardTypeOptions || 'default'}
+        />
+      ))}
 
       {/* Add Photo */}
       <TouchableOpacity style={styles.addPhotoButton} onPress={handleAddPhoto}>
