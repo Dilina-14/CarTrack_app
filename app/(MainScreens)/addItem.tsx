@@ -95,7 +95,7 @@ const AddItem = () => {
       await set(ref(db, `marketplace/${newId}`), newItem);
 
       Alert.alert('Success', 'Item added successfully!');
-      router.push('/marketplace'); // Navigate back to the marketplace
+      router.push('/(tabs)/marketplace'); // Navigate back to the marketplace
     } catch (error) {
       console.error('Error adding item:', error);
       Alert.alert('Error', 'Failed to add item. Please try again.');
