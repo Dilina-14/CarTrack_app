@@ -5,23 +5,20 @@ import { colors } from '@/constants/theme';
 import { useRouter } from 'expo-router';
 import { auth, db } from '@/firebaseAuth';
 import { getDoc, doc } from 'firebase/firestore';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 
 /**
  * TopBar - A reusable navigation top bar component that displays the user's profile image from Firebase
  * @param {Object} props - Component props
- * @param {Function} props.onMenuPress - Function to call when menu is pressed
  * @param {Object} props.style - Additional styles for the container
  */
 interface TopBarProps {
-  onMenuPress: () => void;
   style?: object;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ 
-  onMenuPress, 
-  style 
-}) => {
+const TopBar: React.FC<TopBarProps> = ({ style }) => {
   const router = useRouter();
+  const navigation = useNavigation();
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -54,15 +51,20 @@ const TopBar: React.FC<TopBarProps> = ({
     fetchUserProfileImage();
   }, []);
 
+  // Handle menu button press - open drawer
+  const handleMenuPress = () => {
+    navigation.dispatch(DrawerActions.toggleDrawer());
+  };
+
   // Handle profile button press
   const handleProfilePress = () => {
-    router.push('/(drawer_tabs)/(tabs)/profile');
+    router.push('/profile');
   };
 
   return (
     <View style={[styles.container, style]}>
       {/* Menu Button */}
-      <TouchableOpacity onPress={onMenuPress} style={styles.menuButton}>
+      <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
         <List 
           size={28} 
           color="#FFFFFF"
@@ -72,7 +74,7 @@ const TopBar: React.FC<TopBarProps> = ({
       {/* Profile Image */}
       <TouchableOpacity onPress={handleProfilePress} style={styles.profileContainer}>
         <Image 
-          source={profileImage ? { uri: profileImage } : require('../assets/images/avatar.png')}
+          source={profileImage ? { uri: profileImage } : require('@/assets/images/avatar.png')}
           style={styles.profileImage}
         />
       </TouchableOpacity>
@@ -96,7 +98,9 @@ const styles = StyleSheet.create({
   menuButton: {
     padding: 5,
     width: 40,
-    height: 40
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   profileContainer: {
     width: 40,
