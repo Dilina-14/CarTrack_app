@@ -310,7 +310,7 @@ const ExpenseList = () => {
 };
 
 const ExpenseGraph = () => {
-  const [fuelExpenses, setFuelExpenses] = useState<number[]>([]);
+  const [allExpenses, setAllExpenses] = useState<number[]>([]); // Store all expenses
   const [totalExpenditure, setTotalExpenditure] = useState<number>(0);
   const [averageDailySpending, setAverageDailySpending] = useState<number>(0);
 
@@ -325,14 +325,10 @@ const ExpenseGraph = () => {
 
     const userId = user.uid;
 
-    // Fetch fuel expenses from Firestore
+    // Fetch ALL expenses from Firestore (not just fuel)
     const db = getFirestore(app);
     const expensesRef = collection(db, "expenses");
-    const q = query(
-      expensesRef,
-      where("userId", "==", userId),
-      where("category", "==", "Fuel") // Filter by fuel expenses
-    );
+    const q = query(expensesRef, where("userId", "==", userId)); // Filter by user ID
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const expenses: number[] = [];
@@ -345,11 +341,10 @@ const ExpenseGraph = () => {
         total += amount;
       });
 
-      setFuelExpenses(expenses);
+      setAllExpenses(expenses);
       setTotalExpenditure(total);
 
-
-      const days = 30; // 30 day per month
+      const days = 30; // 30 days per month
       const average = total / days;
       setAverageDailySpending(average);
     });
@@ -359,7 +354,7 @@ const ExpenseGraph = () => {
   }, []);
 
   // Generate bar data for the graph
-  const barData = fuelExpenses.map((amount, index) => ({
+  const barData = allExpenses.map((amount, index) => ({
     value: amount,
     key: index.toString(),
   }));
@@ -368,7 +363,7 @@ const ExpenseGraph = () => {
 
   return (
     <View style={styles.graphContainer}>
-      <Text style={styles.graphTitle}>Fuel Expense - Monthly</Text>
+      <Text style={styles.graphTitle}>Expenses - Monthly</Text> {/* Updated title */}
 
       {/* Graph */}
       <View style={styles.chartArea}>
@@ -394,7 +389,7 @@ const ExpenseGraph = () => {
                     styles.bar,
                     {
                       height: `${(item.value / maxValue) * 80}%`,
-                      backgroundColor: "#C6FF66",
+                      backgroundColor: "#C6FF66", // Green color for bars
                     },
                   ]}
                 />
@@ -452,7 +447,7 @@ const HomeScreen = () => {
 
   return (
     <ScreenWrapper>
-      
+
     <TopBar />
 
     <View style={styles.container}>

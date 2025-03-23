@@ -3,6 +3,7 @@ import React from "react";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from '@react-navigation/native';
+import { router } from "expo-router";
 
 const Reminders = () => {
   // Data for reminders matching the image
@@ -29,7 +30,7 @@ const Reminders = () => {
       <View style={styles.container}>
         {/* Header with back button */}
         <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => router.push('../../(tabs)')}>
             <Ionicons name="arrow-back" size={28} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -58,7 +59,7 @@ const Reminders = () => {
         </ScrollView>
 
         {/* Add Reminder Button */}
-        <TouchableOpacity style={styles.addButton}>
+        <TouchableOpacity style={styles.addButton} onPress={() => router.push('../(MainScreens)/addReminder')}>
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>
