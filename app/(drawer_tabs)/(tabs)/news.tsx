@@ -1,35 +1,50 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
-import React from 'react';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import ScreenWrapper from '@/components/ScreenWrapper';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
 import TopBar from '@/components/TopBar';
+import { db } from "@/firebaseAuth";
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 
 // Define the type for the news item
-type NewsItemProps = {
-  newsId: string;
+type NewsItem = {
+  id: string;
+  title: string;
+  date: string;
+  author: string;
+  location?: string;
+  description: string;
+  imageUrl?: string;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
+  distance?: string;
+};
+
+type NewsCardProps = {
+  id: string;
   title: string;
   date: string;
   author: string;
   distance?: string;
-  imageUri: string;
+  imageUrl?: string;
+  onPress: () => void;
 };
 
-
-const NewsCard = ({ title, date, author, distance, imageUri, newsId }: NewsItemProps) => {
-  const router = useRouter();
-
-  const handleNewsPress = () => {
-    // Navigate to the news detail screen with the news ID
-    router.push({
-      pathname: "/(news)/newsdetail",
-      params: { id: newsId }
-    });
-  };
+const NewsCard = ({ title, date, author, distance, imageUrl, onPress }: NewsCardProps) => {
+  // Default image if none is provided
+  const fallbackImage = "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60";
+  const [imageError, setImageError] = useState(false);
 
   return (
-    <TouchableOpacity style={styles.newsCard} onPress={handleNewsPress}>
-      <Image source={{ uri: imageUri }} style={styles.newsImage} />
+    <TouchableOpacity style={styles.newsCard} onPress={onPress}>
+      <Image 
+        source={{ uri: imageError ? fallbackImage : (imageUrl || fallbackImage) }} 
+        style={styles.newsImage}
+        onError={() => setImageError(true)}
+      />
       <View style={styles.cardOverlay}>
         <Text style={styles.newsTitle}>{title}</Text>
         <Text style={styles.newsSubtitle}>{date}</Text>
@@ -49,6 +64,48 @@ const NewsCard = ({ title, date, author, distance, imageUri, newsId }: NewsItemP
 
 const News = () => {
   const router = useRouter();
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchNews = async () => {
+    try {
+      setLoading(true);
+      const newsQuery = query(collection(db, "news"), orderBy("createdAt", "desc"));
+      const querySnapshot = await getDocs(newsQuery);
+      
+      const newsData: NewsItem[] = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data() as Omit<NewsItem, 'id'>
+      }));
+      
+      console.log("Fetched news items:", newsData.length);
+      setNewsItems(newsData);
+    } catch (error) {
+      console.error("Error fetching news:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNews();
+  }, []);
+
+  // Handle pull-to-refresh
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchNews();
+  };
+
+  // Function to handle navigating to news detail
+  const handleNewsPress = (newsId: string) => {
+    router.push({
+      pathname: "/newsdetail",
+      params: { id: newsId }
+    });
+  };
 
   return (
     <ScreenWrapper>
@@ -61,26 +118,48 @@ const News = () => {
         </View>
 
         {/* News Feed */}
-        <ScrollView style={styles.newsFeed}>
-          <NewsCard
-            newsId="1"
-            title="Super Car Meet Up"
-            date="14th of November"
-            author="Organized by Mr.Dilino"
-            distance="235 km"
-            imageUri="https://images.unsplash.com/photo-1614200187524-dc4b892acf16?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60"
-          />
-          <NewsCard
-            newsId="2"
-            title="Sri Lanka To Ease Vehicle Import Restrictions"
-            date="posted on 18/11/2024"
-            author="Author Sara Eddings"
-            imageUri="https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60"
-          />
-        </ScrollView>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#A020F0" />
+          </View>
+        ) : (
+          <ScrollView 
+            style={styles.newsFeed}
+            contentContainerStyle={newsItems.length === 0 ? styles.emptyContainer : undefined}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                colors={["#A020F0"]}
+                tintColor="#A020F0"
+              />
+            }
+          >
+            {newsItems.length > 0 ? (
+              newsItems.map((item) => (
+                <NewsCard
+                  key={item.id}
+                  id={item.id}
+                  title={item.title}
+                  date={item.date}
+                  author={item.author}
+                  distance={item.distance}
+                  imageUrl={item.imageUrl}
+                  onPress={() => handleNewsPress(item.id)}
+                />
+              ))
+            ) : (
+              <View style={styles.emptyNewsContainer}>
+                <Feather name="file-text" size={50} color="#A020F0" />
+                <Text style={styles.emptyNewsText}>No news available</Text>
+                <Text style={styles.emptyNewsSubtext}>Add your first news item</Text>
+              </View>
+            )}
+          </ScrollView>
+        )}
 
         {/* Floating Action Button */}
-        <TouchableOpacity style={styles.fab} onPress={() => router.push("/(news)/addnews")}>
+        <TouchableOpacity style={styles.fab} onPress={() => router.push("/addnews")}>
           <Feather name="plus" size={24} color="white" />
         </TouchableOpacity>
       </SafeAreaView>
@@ -120,6 +199,7 @@ const styles = StyleSheet.create({
   newsImage: {
     width: '100%',
     height: '100%',
+    resizeMode: 'cover',
   },
   cardOverlay: {
     position: 'absolute',
@@ -127,7 +207,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   newsTitle: {
     fontSize: 18,
@@ -173,5 +253,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     elevation: 8,
     zIndex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyNewsContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 100,
+  },
+  emptyNewsText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 16,
+  },
+  emptyNewsSubtext: {
+    color: '#999',
+    fontSize: 14,
+    marginTop: 8,
   },
 });

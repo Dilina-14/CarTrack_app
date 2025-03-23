@@ -3,10 +3,11 @@
   "compilerOptions": {
     "strict": true,
     "esModuleInterop": true,
-    "baseUrl": ".", // Add this line
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*", "./*"] // Merge the paths into a single key
-    }
+      "@/*": ["src/*", "./*"]
+    },
+    "jsx": "react-native"  // Add this line to enable JSX
   },
   "include": [
     "**/*.ts",
