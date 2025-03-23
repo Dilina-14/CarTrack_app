@@ -244,7 +244,11 @@ const LegalSupportScreen = () => {
   return (
     <ScreenWrapper>
       <View style={styles.container}>
-        <View style={styles.headerContainer}></View>
+        <View style={styles.headerContainer}>
+          <TouchableOpacity onPress={() => router.back()}>
+                      <Ionicons name="arrow-back" size={28} color="#fff" />
+                    </TouchableOpacity>
+        </View>
         <Text style={styles.header}>Legal and Regulatory Documents</Text>
 
         <View style={styles.searchBarContainer}>
