@@ -1,14 +1,11 @@
+import React, { useState } from 'react';
 import { Drawer } from "expo-router/drawer";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { useState } from "react";
-
-// Custom Drawer Content
+import { router, usePathname } from "expo-router";
 import { DrawerContentComponentProps } from "@react-navigation/drawer";
-
 import { ComponentProps } from 'react';
 
 type MenuItem = {
@@ -19,20 +16,33 @@ type MenuItem = {
 };
 
 const CustomDrawerContent = (props: DrawerContentComponentProps) => {
-  const [activeItem, setActiveItem] = useState('index');
+  const pathname = usePathname();
+  // Extract the route name from the path to determine active item
+  const routeSegments = pathname.split('/');
+  const currentRoute = routeSegments[routeSegments.length - 1] || 'index';
+  
+  const [activeItem, setActiveItem] = useState(currentRoute);
 
   const menuItems: MenuItem[] = [
-    { id: 'index', icon: 'home', label: 'Home', screen: '/' },
-    { id: 'news', icon: 'newspaper', label: 'News', screen: '/news' },
-    { id: 'marketplace', icon: 'cart', label: 'Marketplace', screen: '/marketplace' },
-    { id: 'profile', icon: 'person', label: 'Profile', screen: '/profile' },
-    { id: 'chatbot', icon: 'chatbubble', label: 'ChatBot', screen: '/chatbot' },
+    { id: 'index', icon: 'home', label: 'Home', screen: '/(drawer_tabs)/' },
+    { id: 'news', icon: 'newspaper', label: 'News', screen: '/(drawer_tabs)/news' },
+    { id: 'marketplace', icon: 'cart', label: 'Marketplace', screen: '/(drawer_tabs)/marketplace' },
+    { id: 'reportsPage', icon: 'document-text', label: 'ReportsPage', screen: '/other/reportsPage' },
+    { id: 'profile', icon: 'person', label: 'Profile', screen: '/(drawer_tabs)/profile' },
+    { id: 'chatbot', icon: 'chatbubble', label: 'ChatBot', screen: '/(drawer_tabs)/chatbot' },
+    { id: 'logout', icon: 'log-out-outline', label: 'Logout', screen: '/(auth)/login' },
+    
   ];
 
   const handleMenuItemPress = (item: MenuItem) => {
     setActiveItem(item.id);
+    props.navigation.closeDrawer(); // Close drawer after selection
+    
     if (item.screen) {
-      router.push(item.screen as any);
+      // Add a small delay to make the transition smoother
+      setTimeout(() => {
+        router.push(item.screen as any);
+      }, 100);
     }
   };
 
@@ -66,11 +76,11 @@ export default function Layout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
         screenOptions={{
-          headerShown: false, // Hide the header
+          headerShown: false, // Hide the default header
           swipeEnabled: true, // Enable swipe gestures
           swipeEdgeWidth: 100, // Width of the swipeable area from the left edge
           drawerStyle: {
-            backgroundColor: colors.black, // Set drawer background color to black
+            backgroundColor: '#121212', // Set drawer background color to black
             width: '80%',
           },
         }}
@@ -98,6 +108,13 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
+          name="reportsPage" // Corresponds to app/marketplace.tsx
+          options={{
+            drawerLabel: "ReportsPage",
+            title: "ReportsPage",
+          }}
+        />
+        <Drawer.Screen
           name="profile" // Corresponds to app/profile.tsx
           options={{
             drawerLabel: "Profile",
@@ -112,12 +129,13 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
-          name="signout" // SignOut
+          name="logout" // SignOut
           options={{
-            drawerLabel: "SignOut",
-            title: "SignOut",
+            drawerLabel: "Logout",
+            title: "Logout",
           }}
         />
+        
       </Drawer>
     </GestureHandlerRootView>
   );
@@ -125,21 +143,23 @@ export default function Layout() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.black,
+    backgroundColor: '#121212',
     flex: 1,
     padding: 16,
     width: '80%',
+    justifyContent: 'space-between', // Align items vertically
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24,
+    paddingTop: 40, // Add more padding at the top for status bar
   },
   title: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '500',
+    fontSize: 24,
+    
   },
   menuList: {
     flex: 1,
@@ -147,34 +167,30 @@ const styles = StyleSheet.create({
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 10,
   },
   activeMenuItem: {
-    backgroundColor: '#333',
+    backgroundColor: '#121212',
   },
   icon: {
-    marginRight: 12,
+    marginRight: 16,
   },
   menuText: {
     color: '#fff',
-    flex: 1,
-  },
-  videoIcon: {
-    backgroundColor: '#674ea7',
-    padding: 8,
-    borderRadius: 8,
-  },
-  drawerContainer: {
-    flex: 1,
-    backgroundColor: colors.black,
-    paddingTop: 50,
-    paddingHorizontal: 20,
-  },
-  drawerLabel: {
-    color: "#FFF",
     fontSize: 16,
-    marginVertical: 15,
+    fontWeight: '500',
   },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 10,
+    marginTop: 10,
+    marginBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#121212',
+    paddingTop: 20,
+  }
 });
