@@ -13,6 +13,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const AddItem = () => {
   const [brand, setBrand] = useState('');
@@ -95,33 +96,50 @@ const AddItem = () => {
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    const newItem = {
-      brand,
-      model,
-      trim,
-      year,
-      condition,
-      transmission,
-      bodyType,
-      fuelType,
-      capacity,
-      mileage,
-      contactNumber,
-      location,
-      price,
-      imgUrl: images,
-      date: new Date(), // Add the current date
-    };
+    const db = getFirestore();
+    const storage = getStorage();
 
     try {
-      const db = getFirestore();
+      // Upload images to Firebase Storage
+      const uploadedImageUrls: string[] = [];
+      for (const [index, imageUri] of images.entries()) {
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+
+        // Create a unique path for each image in Firebase Storage
+        const storageRef = ref(storage, `marketplace/${Date.now()}_${index}`);
+        await uploadBytes(storageRef, blob);
+
+        // Get the public URL of the uploaded image
+        const downloadUrl = await getDownloadURL(storageRef);
+        uploadedImageUrls.push(downloadUrl);
+      }
+
+      // Create the new item with the uploaded image URLs
+      const newItem = {
+        brand,
+        model,
+        trim,
+        year,
+        condition,
+        transmission,
+        bodyType,
+        fuelType,
+        capacity,
+        mileage,
+        contactNumber,
+        location,
+        price,
+        imgUrl: uploadedImageUrls, // Use the public URLs of the uploaded images
+        date: new Date(), // Add the current date
+      };
 
       // Get the last ID from Firestore
       const marketplaceCollection = collection(db, 'marketplace');
       const q = query(marketplaceCollection, orderBy('id', 'desc'), limit(1));
       const snapshot = await getDocs(q);
 
-      let newId = '00002'; // Default starting ID
+      let newId = '00001'; // Default starting ID
       if (!snapshot.empty) {
         const lastItem = snapshot.docs[0].data();
         const lastId = parseInt(lastItem.id, 10);

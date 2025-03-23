@@ -35,6 +35,7 @@ const Marketplace = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -109,7 +110,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onFilter }) => {
 
   return (
     <ScreenWrapper>
+      
       {/* Search Bar */}
+<<<<<<< Updated upstream
+=======
+      <TopBar />
+      <Text style={styles.name}>Marketplace</Text>
+>>>>>>> Stashed changes
       <View style={styles.searchBarContainer}>
         <TextInput
           style={styles.searchInput}
@@ -130,8 +137,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onFilter }) => {
               return (
                 <TouchableOpacity
                   key={item.id}
-                  style={styles.ItemContainer}
-                  onPress={() => router.push(`/marketplace-display`)}
+                  style={[
+                    styles.ItemContainer,
+                    selectedItemId === item.id && styles.selectedItemContainer, // Apply border when selected
+                  ]}
+                  onPress={() => {
+                    setSelectedItemId(item.id); // Set the selected item
+                    router.push(`/marketplace-display`);
+                  }}
                 >
                   <Image
                     source={{
@@ -188,12 +201,21 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 10,
   },
+  name: {
+    fontSize: 30,
+    color: "#C3FF65",
+    fontWeight: "bold",
+    marginBottom: 0,
+    marginTop: -10,
+    paddingLeft: 30,
+  },
   ItemContainer: {
     backgroundColor: '#333',
     borderRadius: 20,
     marginVertical: 10,
     overflow: 'hidden',
     padding: 10,
+    marginHorizontal: 15,
     flexDirection: 'row',
     alignItems: 'center', // ✅ Ensures alignment
   },
@@ -260,6 +282,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginVertical: 10,
+    borderTopEndRadius: 40,
   },
   pageButton: {
     paddingVertical: 6,
@@ -273,11 +296,17 @@ const styles = StyleSheet.create({
   },
   activePage: {
     fontWeight: 'bold',
-    color: '#45B1FF',
+    color: '#C6FF66',
+    borderWidth: 2,
+    borderColor: '#C6FF66',
+    paddingHorizontal: 5,
+    borderRadius: 8,
+    marginHorizontal: 5,
   },
   page: {
     fontWeight: 'normal',
-    color: '#000',
+    color: '#D3D3D380',
+    paddingHorizontal: 30,
   },
   pageButtonText: {
     color: '#000',
@@ -305,6 +334,7 @@ const styles = StyleSheet.create({
     margin: 10,
     paddingHorizontal: 15,
     height: 50,
+    marginHorizontal: 15,
   },
   searchInput: {
     flex: 1,
@@ -349,6 +379,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#74B520',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  selectedItemContainer: {
+    borderWidth: 2,
+    borderColor: '#45B1FF',
   },
 });
 
