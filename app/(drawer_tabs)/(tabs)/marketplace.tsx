@@ -6,24 +6,29 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  ActivityIndicator
+  ActivityIndicator,
+  TextInput
 } from 'react-native';
-import { Plus, SealCheck } from "phosphor-react-native"; // Import the Plus and SealCheck icons
+import { Plus, SealCheck, Funnel, MagnifyingGlass } from "phosphor-react-native"; // Import the Plus, SealCheck, Funnel, and MagnifyingGlass icons
 import { useRouter } from "expo-router";
 import ScreenWrapper from '@/components/ScreenWrapper';
+import { getFirestore, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 
-const ITEMS_PER_PAGE = 8;
+const ItemS_PER_PAGE = 8;
 
 const Marketplace = () => {
   interface Item {
-    id: string;
-    imgUrl: string[];
-    title: string;
-    mileage: string;
-    location: string;
-    price: string;
-    verified: boolean;
-    daysAgo: number;
+      id: string;
+      imgUrl: string[];
+      mileage: string;
+      location: string;
+      price: string;
+      verified: boolean;
+      daysAgo: number;
+      brand: string; // Added brand property
+      model: string; // Added model property
+      year: string;  // Added year property
+      title: string; // Added title property
   }
 
   const [data, setData] = useState<Item[]>([]);
@@ -36,25 +41,38 @@ const Marketplace = () => {
     fetchData();
   }, [page]);
 
+  // Helper function to get paginated data
+  const getPaginatedData = (): Item[] => {
+    const startIndex = (page - 1) * ItemS_PER_PAGE;
+    const endIndex = startIndex + ItemS_PER_PAGE;
+    return data.slice(startIndex, endIndex);
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://192.168.1.67:3000/marketplace`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const result = await response.json();
-  
-      // Convert object to array
-      const formattedData = Object.keys(result).map((key) => ({
-        id: key,
-        ...result[key],
+      const db = getFirestore();
+      const marketplaceCollection = collection(db, 'marketplace');
+
+      // Fetch all items from Firestore, ordered by ID
+      const q = query(marketplaceCollection, orderBy('id', 'asc'));
+      const snapshot = await getDocs(q);
+
+      const result: Item[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Item[];
+
+      console.log('Fetched Data:', result); // Log the fetched data
+
+      const formattedData = result.map((item: Item) => ({
+        ...item,
+        title: `${item.brand} ${item.model} ${item.year}`, // Combine brand, model, and year
       }));
-  
-      console.log('Fetched Data:', formattedData); // ✅ Logs formatted data
-  
+
+      console.log('Formatted Data:', formattedData); // Log the formatted data
       setData(formattedData);
-      setTotalPages(Math.ceil(formattedData.length / ITEMS_PER_PAGE));
+      setTotalPages(Math.ceil(formattedData.length / ItemS_PER_PAGE));
     } catch (error) {
       console.error('Error fetching data:', error);
       alert('Failed to fetch data. Please try again later.');
@@ -63,31 +81,61 @@ const Marketplace = () => {
     }
   };
 
-  const getPaginatedData = () => {
-    if (!data || data.length === 0) return [];
-    const startIndex = (page - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return data.slice(startIndex, endIndex);
-  };
+  // SearchBar Component
+interface SearchBarProps {
+  onSearch: (text: string) => void;
+  onFilter: () => void;
+}
+
+const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onFilter }) => {
+  return (
+    <View style={styles.searchBarContainer}>
+      <TouchableOpacity style={styles.filterButton} onPress={onFilter}>
+        <Funnel size={24} color="white" weight="bold" />
+      </TouchableOpacity>
+      <View style={styles.searchContainer}>
+        <TextInput
+          placeholder="Search"
+          placeholderTextColor="gray"
+          style={styles.input}
+          onChangeText={onSearch}  // Trigger search when typing
+        />
+        <MagnifyingGlass size={20} color="black" />
+      </View>
+    </View>
+  );
+};
+
 
   return (
     <ScreenWrapper>
+      {/* Search Bar */}
+      <View style={styles.searchBarContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search for Items..."
+          placeholderTextColor="#aaa"
+        />
+        <TouchableOpacity style={styles.searchIconContainer}>
+          <MagnifyingGlass size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
       {loading ? (
         <ActivityIndicator size="large" color="#45B1FF" />
       ) : (
         <>
           <ScrollView contentContainerStyle={styles.scrollContent}>
             {getPaginatedData().map((item) => {
-              console.log('Image URL:', item.imgUrl[0]); // Log the first image URL
+              console.log('Rendering Item:', item); // Log each item being rendered
               return (
                 <TouchableOpacity
                   key={item.id}
-                  style={styles.itemContainer}
-                  onPress={() => router.push(`/marketplace-display`)} // Pass item ID to the next screen
+                  style={styles.ItemContainer}
+                  onPress={() => router.push(`/marketplace-display`)}
                 >
                   <Image
                     source={{
-                      uri: item.imgUrl && item.imgUrl.length > 0 ? item.imgUrl[0] : 'https://via.placeholder.com/100', // Use the first image or fallback
+                      uri: item.imgUrl && item.imgUrl.length > 0 ? item.imgUrl[0] : 'https://via.placeholder.com/100',
                     }}
                     style={styles.image}
                   />
@@ -98,7 +146,7 @@ const Marketplace = () => {
                     <Text style={styles.price}>{item.price ? `LKR ${item.price}` : 'Price Not Available'}</Text>
                     {item.verified && (
                       <View style={styles.verifiedContainer}>
-                        <SealCheck size={16} color="#45B1FF" weight="fill" /> {/* Use the SealCheck icon */}
+                        <SealCheck size={16} color="#45B1FF" weight="fill" />
                         <Text style={styles.verifiedText}>Verified</Text>
                       </View>
                     )}
@@ -107,6 +155,7 @@ const Marketplace = () => {
                 </TouchableOpacity>
               );
             })}
+          </ScrollView>
 
             {/* Pagination */}
             <View style={styles.pagination}>
@@ -118,8 +167,6 @@ const Marketplace = () => {
                 </TouchableOpacity>
               ))}
             </View>
-          </ScrollView>
-
           {/* Floating Plus Button */}
           <TouchableOpacity
             style={styles.floatingButton}
@@ -141,7 +188,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 10,
   },
-  itemContainer: {
+  ItemContainer: {
     backgroundColor: '#333',
     borderRadius: 20,
     marginVertical: 10,
@@ -251,10 +298,23 @@ const styles = StyleSheet.create({
   },
 
   searchBarContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: '#121212', // Replace with your desired color
-    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#333', // Background color for the search bar
+    borderRadius: 25,
+    margin: 10,
+    paddingHorizontal: 15,
+    height: 50,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#fff', // Text color
+  },
+  searchIconContainer: {
+    marginLeft: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   filterButton: {
     width: 50,
