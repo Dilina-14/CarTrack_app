@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from "expo-router";
 import { getAuth } from "firebase/auth";
@@ -7,13 +7,14 @@ import { getFirestore, collection, addDoc } from "firebase/firestore";
 import { app } from "../../firebaseAuth";
 
 const AddReminder = () => {
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState(new Date());
-  const [time, setTime] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [description, setDescription] = useState("");
-  const [errors, setErrors] = useState({ title: "", date: "", time: "" });
+  const [title, setTitle] = useState<string>("");
+  const [date, setDate] = useState<Date>(new Date());
+  const [time, setTime] = useState<Date>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+  const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
+  const [description, setDescription] = useState<string>("");
+  const [errors, setErrors] = useState<{ title: string; date: string; time: string }>({ title: "", date: "", time: "" });
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   const handleDateChange = (event: any, selectedDate: Date | undefined) => {
     const currentDate = selectedDate || date;
@@ -49,8 +50,8 @@ const AddReminder = () => {
     }
   };
 
-  const handleSave = async () => {
-    let hasError = false;
+  const handleSave = async (): Promise<void> => {
+    let hasError: boolean = false;
     const newErrors = { title: "", date: "", time: "" };
 
     if (!title) {
@@ -75,6 +76,8 @@ const AddReminder = () => {
     setErrors(newErrors);
 
     if (!hasError) {
+      setIsSaving(true);
+      
       try {
         // Get the current user's ID
         const auth = getAuth();
@@ -104,6 +107,8 @@ const AddReminder = () => {
         router.push("../other/reminders");
       } catch (error) {
         console.error("Error saving reminder:", error);
+      } finally {
+        setIsSaving(false);
       }
     }
   };
@@ -198,11 +203,23 @@ const AddReminder = () => {
 
       {/* Buttons */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={() => router.push("../../other/reminders")} style={styles.cancelButton}>
+        <TouchableOpacity 
+          onPress={() => router.push("../../other/reminders")} 
+          style={styles.cancelButton}
+          disabled={isSaving}
+        >
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
-          <Text style={styles.saveText}>Save</Text>
+        <TouchableOpacity 
+          onPress={handleSave} 
+          style={styles.saveButton}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <ActivityIndicator size="small" color="#000" />
+          ) : (
+            <Text style={styles.saveText}>Save</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
