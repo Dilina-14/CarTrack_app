@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Image } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Image, Platform } from 'react-native';
 import React, { useState } from 'react';
 import ScreenWrapper from '@/components/ScreenWrapper';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useRouter } from "expo-router";
-
+import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 const addnews = () => {
   const navigation = useNavigation();
@@ -15,9 +16,70 @@ const addnews = () => {
   const [distance, setDistance] = useState('');
   const [description, setDescription] = useState('');
   const [imageUri, setImageUri] = useState('');
+  
+  // Date picker state
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const handleAddImage = () => {
-    setImageUri('https://images.unsplash.com/photo-1614200187524-dc4b892acf16?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60');
+  // Request permissions for accessing media library
+  const requestMediaLibraryPermission = async () => {
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Sorry, we need camera roll permissions to upload images!');
+        return false;
+      }
+      return true;
+    }
+    return true;
+  };
+
+  // Handle image picking from gallery
+  const handlePickImage = async () => {
+    const hasPermission = await requestMediaLibraryPermission();
+    
+    if (hasPermission) {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 1,
+      });
+      
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setImageUri(result.assets[0].uri);
+      }
+    }
+  };
+
+  // Handle date change
+  const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    const currentDate = selectedDate || new Date();
+    setShowDatePicker(Platform.OS === 'ios');
+    setSelectedDate(currentDate);
+    
+    // Format the date
+    const day = currentDate.getDate();
+    const month = currentDate.toLocaleString('default', { month: 'long' });
+    const year = currentDate.getFullYear();
+    
+    // Add ordinal suffix to day
+    const getOrdinalSuffix = (day: number): string => {
+      if (day > 3 && day < 21) return 'th';
+      switch (day % 10) {
+        case 1: return 'st';
+        case 2: return 'nd';
+        case 3: return 'rd';
+        default: return 'th';
+      }
+    };
+    
+    const formattedDate = `${day}${getOrdinalSuffix(day)} of ${month}, ${year}`;
+    setDate(formattedDate);
+  };
+
+  const showDatepicker = () => {
+    setShowDatePicker(true);
   };
 
   const handleSubmit = () => {
@@ -38,7 +100,7 @@ const addnews = () => {
         </View>
 
         <ScrollView style={styles.form}>
-          <TouchableOpacity style={styles.imageUpload} onPress={handleAddImage}>
+          <TouchableOpacity style={styles.imageUpload} onPress={handlePickImage}>
             {imageUri ? (
               <Image source={{ uri: imageUri }} style={styles.uploadedImage} />
             ) : (
@@ -62,13 +124,27 @@ const addnews = () => {
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Date</Text>
-            <TextInput
-              style={styles.input}
-              value={date}
-              onChangeText={setDate}
-              placeholder="Enter date (e.g., 14th of November)"
-              placeholderTextColor="#666"
-            />
+            <TouchableOpacity style={styles.dateInputContainer} onPress={showDatepicker}>
+              <TextInput
+                style={styles.input}
+                value={date}
+                placeholder="Select a date"
+                placeholderTextColor="#666"
+                editable={false}
+              />
+              <Feather name="calendar" size={20} color="#A020F0" style={styles.calendarIcon} />
+            </TouchableOpacity>
+            
+            {showDatePicker && (
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display="default"
+                onChange={onDateChange}
+                style={styles.datePicker}
+                themeVariant="dark"
+              />
+            )}
           </View>
 
           <View style={styles.inputContainer}>
@@ -177,5 +253,17 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     padding: 10,
     color: 'white',
+  },
+  dateInputContainer: {
+    position: 'relative',
+  },
+  calendarIcon: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
+  },
+  datePicker: {
+    backgroundColor: '#121212',
+    marginTop: 10,
   },
 });
