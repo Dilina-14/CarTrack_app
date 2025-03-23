@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import ScreenWrapper from '@/components/ScreenWrapper';
 import { Feather } from '@expo/vector-icons';
@@ -45,6 +45,7 @@ const SelectLocation = () => {
         });
         setMarkerPosition({ latitude, longitude });
 
+        // Get location name from coordinates
         const addresses = await Location.reverseGeocodeAsync({ latitude, longitude });
         if (addresses && addresses.length > 0) {
           const address = addresses[0];
@@ -56,8 +57,9 @@ const SelectLocation = () => {
           ].filter(Boolean);
           setLocationName(nameComponents.join(', '));
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error getting location:", error);
+        Alert.alert('Location Error', 'Could not get your current location.');
       } finally {
         setIsLoading(false);
       }
@@ -68,6 +70,7 @@ const SelectLocation = () => {
     const { coordinate } = e.nativeEvent;
     setMarkerPosition(coordinate);
 
+    // Get location name from new coordinates
     (async () => {
       try {
         const addresses = await Location.reverseGeocodeAsync(coordinate);
@@ -81,28 +84,31 @@ const SelectLocation = () => {
           ].filter(Boolean);
           setLocationName(nameComponents.join(', '));
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error getting address:", error);
       }
     })();
   };
 
   const handleConfirm = () => {
-    if (markerPosition) {
-      // Use router.push to navigate back to addnews with location data
-      router.push({
-        pathname: "/(news)/addnews",
-        params: {
-          locationData: JSON.stringify({
-            name: locationName,
-            latitude: markerPosition.latitude,
-            longitude: markerPosition.longitude,
-          }),
-        }
-      });
-    } else {
-      alert('Please select a location on the map');
+    if (!markerPosition) {
+      Alert.alert('Selection Required', 'Please select a location on the map');
+      return;
     }
+
+    // Navigate back to addnews with location data
+    const locationData: LocationData = {
+      name: locationName || 'Selected Location',
+      latitude: markerPosition.latitude,
+      longitude: markerPosition.longitude,
+    };
+
+    router.push({
+      pathname: "/addnews",
+      params: {
+        locationData: JSON.stringify(locationData),
+      }
+    });
   };
 
   return (
@@ -130,6 +136,7 @@ const SelectLocation = () => {
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#A020F0" />
             <Text style={styles.loadingText}>Loading map...</Text>
           </View>
         ) : (
@@ -138,6 +145,8 @@ const SelectLocation = () => {
             region={region}
             onPress={handleMapPress}
             onRegionChangeComplete={setRegion}
+            showsUserLocation={true}
+            showsMyLocationButton={true}
           >
             {markerPosition && (
               <Marker
@@ -172,6 +181,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
+    marginTop: 30,
   },
   backButton: {
     padding: 4,
@@ -209,10 +219,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#121212',
   },
   loadingText: {
     color: 'white',
     fontSize: 16,
+    marginTop: 16,
   },
   footer: {
     padding: 16,
