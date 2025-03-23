@@ -21,7 +21,9 @@ import {
   FileText,
   Wrench,
   Trash,
-  X
+  X,
+  BellRinging,
+  BellSimpleRinging
 } from "phosphor-react-native";
 import { colors } from "@/constants/theme";
 import { router } from "expo-router";
@@ -470,10 +472,10 @@ const HomeScreen = () => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push("../(tabs)/marketplace")}>
-            <View style={[styles.iconContainer, { borderColor: "#FF474A" }]}>
-              <ShoppingCart size={43} color="#FF474A" weight="bold" />
-              <Text style={[styles.iconText, { color: "#FF474A" }]}>Shop</Text>
+          <TouchableOpacity onPress={() => router.push("./../other/reminders")}>
+            <View style={[styles.iconContainer, { borderColor: "#FD8412" }]}>
+              <BellSimpleRinging size={43} color="#FD8412" weight="bold" />
+              <Text style={[styles.iconText, { color: "#FD8412" }]}>Reminders</Text>
             </View>
           </TouchableOpacity>
 
