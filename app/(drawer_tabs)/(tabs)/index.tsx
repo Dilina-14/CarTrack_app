@@ -452,7 +452,9 @@ const HomeScreen = () => {
 
   return (
     <ScreenWrapper>
-    <TopBar onMenuPress={() => console.log("Menu pressed")} />
+      
+    <TopBar />
+
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
       <Text style={styles.greeting}>

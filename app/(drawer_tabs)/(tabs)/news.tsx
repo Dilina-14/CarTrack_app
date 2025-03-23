@@ -54,7 +54,8 @@ const News = () => {
     <ScreenWrapper>
       <SafeAreaView style={styles.container}>
         {/* Header */}
-        <TopBar onMenuPress={() => console.log("Menu pressed")} />
+        <TopBar />
+        
         <View style={styles.header}>
           <Text style={styles.headerTitle}>News</Text>
         </View>

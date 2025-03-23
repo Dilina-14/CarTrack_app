@@ -251,7 +251,8 @@ const Marketplace = () => {
 
   return (
     <ScreenWrapper>
-      <TopBar onMenuPress={() => console.log("Menu pressed")} />
+      <TopBar />
+      
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <SearchBar />
