@@ -1,8 +1,7 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Image, Platform } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Image, Platform, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import ScreenWrapper from '@/components/ScreenWrapper';
 import { Feather } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -10,6 +9,7 @@ import * as Location from 'expo-location';
 import { db, storage } from "@/firebaseAuth"; 
 import { collection, addDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface LocationData {
   name: string;
@@ -17,10 +17,12 @@ interface LocationData {
   longitude: number;
 }
 
+const FORM_STORAGE_KEY = 'add_news_form_data';
+
 const AddNews = () => {
-  const navigation = useNavigation();
   const router = useRouter();
-  const params = useLocalSearchParams<{ locationData?: string }>(); // Retrieve locationData from params
+  const params = useLocalSearchParams<{ locationData?: string }>();
+  
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(new Date());
   const [author, setAuthor] = useState('');
@@ -31,18 +33,108 @@ const AddNews = () => {
   const [mapCoordinates, setMapCoordinates] = useState<{ latitude: number, longitude: number } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dateError, setDateError] = useState("");
+  const [formLoaded, setFormLoaded] = useState(false);
+  const [isNewForm, setIsNewForm] = useState(true);
+
+  // Clear all form data in AsyncStorage
+  const clearFormData = async () => {
+    try {
+      await AsyncStorage.removeItem(FORM_STORAGE_KEY);
+      console.log('Form data cleared successfully');
+    } catch (error: any) {
+      console.error('Error clearing form data:', error);
+    }
+  };
+
+  // Reset form to initial state
+  const resetForm = () => {
+    setTitle('');
+    setDate(new Date());
+    setAuthor('');
+    setLocation('');
+    setDescription('');
+    setImageUri('');
+    setMapCoordinates(null);
+    setDateError('');
+  };
+
+  // Save form data to AsyncStorage (only during location selection)
+  const saveFormData = async () => {
+    if (!isNewForm) {
+      try {
+        const formData = {
+          title,
+          date: date.toISOString(),
+          author,
+          description,
+          imageUri,
+        };
+        await AsyncStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(formData));
+        console.log('Form data saved successfully');
+      } catch (error: any) {
+        console.error('Error saving form data:', error);
+      }
+    }
+  };
+
+  // Load form data from AsyncStorage
+  const loadFormData = async () => {
+    try {
+      // If we have location data in params, this means we're returning from location selection
+      // Only then should we try to restore the form data
+      if (params.locationData) {
+        const savedData = await AsyncStorage.getItem(FORM_STORAGE_KEY);
+        if (savedData) {
+          const formData = JSON.parse(savedData);
+          setTitle(formData.title || '');
+          setDate(formData.date ? new Date(formData.date) : new Date());
+          setAuthor(formData.author || '');
+          setDescription(formData.description || '');
+          if (formData.imageUri) {
+            setImageUri(formData.imageUri);
+          }
+          setIsNewForm(false);
+          console.log('Form data loaded successfully');
+        }
+      } else {
+        // If we're not returning from location selection, clear any existing data
+        await clearFormData();
+        resetForm();
+      }
+      setFormLoaded(true);
+    } catch (error: any) {
+      console.error('Error loading form data:', error);
+      setFormLoaded(true);
+    }
+  };
+
+  // On initial mount
+  useEffect(() => {
+    // Clear form data immediately
+    resetForm();
+    // Then attempt to load data only if returning from location selection
+    loadFormData();
+  }, []);
+
+  // Save form data whenever fields change, but only if we're not in a new form
+  useEffect(() => {
+    if (formLoaded && !isNewForm) {
+      saveFormData();
+    }
+  }, [title, date, author, description, imageUri, formLoaded, isNewForm]);
 
   // Parse locationData from params
   useEffect(() => {
     if (params.locationData) {
       try {
-        const locationData = JSON.parse(params.locationData) as LocationData;
+        const locationData = JSON.parse(params.locationData as string) as LocationData;
         setLocation(locationData.name);
         setMapCoordinates({
           latitude: locationData.latitude,
           longitude: locationData.longitude,
         });
-      } catch (error) {
+        setIsNewForm(false); // If we have location data, we're in the middle of form editing
+      } catch (error: any) {
         console.error("Error parsing location data:", error);
       }
     }
@@ -53,7 +145,7 @@ const AddNews = () => {
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        alert('Sorry, we need camera roll permissions to upload images!');
+        Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to upload images!');
         return false;
       }
       return true;
@@ -70,19 +162,24 @@ const AddNews = () => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [16, 9],
-        quality: 1,
+        quality: 0.8,
       });
       
       if (!result.canceled && result.assets && result.assets.length > 0) {
         setImageUri(result.assets[0].uri);
+        setIsNewForm(false); // Once we start editing, it's no longer a new form
       }
     }
   };
 
-  // Handle date change - implementing from AddReminders.tsx
-  const handleDateChange = (event: any, selectedDate: Date | undefined) => {
+  // Handle date change
+  const handleDateChange = (event: any, selectedDate?: Date) => {
     const currentDate = selectedDate || date;
-    setShowDatePicker(false);
+    setShowDatePicker(Platform.OS === 'ios'); // For iOS, don't hide the picker automatically
+
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false); // For Android, hide the picker
+    }
 
     // Get the current date without time
     const now = new Date();
@@ -94,24 +191,28 @@ const AddNews = () => {
     } else {
       setDate(currentDate);
       setDateError("");
+      setIsNewForm(false); // Once we start editing, it's no longer a new form
     }
   };
 
   const handleSelectLocation = async () => {
     try {
+      setIsNewForm(false); // Once we start editing, it's no longer a new form
+      
+      // Save current form data before navigating
+      await saveFormData();
+      
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        alert('Permission to access location was denied');
+        Alert.alert('Permission Denied', 'Permission to access location was denied');
         return;
       }
 
       // Navigate to SelectLocation screen
-      router.push({
-        pathname: "/(news)/selectlocation",
-      });
-    } catch (error) {
+      router.push("/selectlocation");
+    } catch (error: any) {
       console.error("Error accessing location:", error);
-      alert('Failed to access location services');
+      Alert.alert('Location Error', 'Failed to access location services');
     }
   };
 
@@ -120,33 +221,47 @@ const AddNews = () => {
     if (!uri) return null;
     
     try {
+      // For faster debugging, you might want to use a lower quality/resolution image
       const response = await fetch(uri);
       const blob = await response.blob();
       
-      const filename = `news_images/${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      // Generate a unique filename with timestamp and random string
+      const filename = `news_images/${new Date().getTime()}_${Math.random().toString(36).substring(2, 8)}.jpg`;
       const storageRef = ref(storage, filename);
       
+      // Upload the image
       await uploadBytes(storageRef, blob);
+      
+      // Get the download URL
       const downloadURL = await getDownloadURL(storageRef);
+      console.log("Image uploaded successfully. URL:", downloadURL);
       
       return downloadURL;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading image:", error);
+      Alert.alert('Upload Error', `Failed to upload image: ${error?.message || 'Unknown error'}`);
       return null;
     }
   };
 
   const handleSubmit = async () => {
-    if (!title) {
-      alert('Please enter a title for the news');
+    // Validate inputs
+    if (!title.trim()) {
+      Alert.alert('Missing Information', 'Please enter a title for the news');
       return;
     }
 
-    // Validate date using the new validation logic
+    if (!description.trim()) {
+      Alert.alert('Missing Information', 'Please enter a description for the news');
+      return;
+    }
+
+    // Validate date using the validation logic
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     if (date < today) {
       setDateError("Please select today or a future date.");
+      Alert.alert('Invalid Date', 'Please select today or a future date.');
       return;
     }
 
@@ -157,6 +272,23 @@ const AddNews = () => {
       let imageUrl = null;
       if (imageUri) {
         imageUrl = await uploadImage(imageUri);
+        if (!imageUrl) {
+          const continueWithoutImage = await new Promise((resolve) => {
+            Alert.alert(
+              'Upload Error',
+              'Failed to upload image. Do you want to continue without an image?',
+              [
+                { text: 'No', onPress: () => resolve(false), style: 'cancel' },
+                { text: 'Yes', onPress: () => resolve(true) }
+              ]
+            );
+          });
+          
+          if (!continueWithoutImage) {
+            setIsSubmitting(false);
+            return;
+          }
+        }
       }
       
       // Format date for display
@@ -177,25 +309,32 @@ const AddNews = () => {
       const newsData = {
         title,
         date: formattedDate,
-        author,
-        location,
+        author: author.trim() || 'Anonymous',
+        location: location.trim() || undefined,
         description,
         imageUrl,
         coordinates: mapCoordinates,
         createdAt: new Date().toISOString(),
       };
       
+      console.log("Saving news data:", newsData);
+      
       // Add to Firestore
       const docRef = await addDoc(collection(db, "news"), newsData);
       console.log("Document written with ID: ", docRef.id);
       
-      alert('News added successfully!');
+      // Clear the saved form data after successful submission
+      await clearFormData();
       
-      // Navigate back
-      router.back();
-    } catch (error) {
+      Alert.alert('Success', 'News added successfully!', [
+        { text: 'OK', onPress: () => {
+          // Navigate to the news list page
+          router.push("/news");
+        }}
+      ]);
+    } catch (error: any) {
       console.error("Error adding news:", error);
-      alert('Failed to add news. Please try again.');
+      Alert.alert('Error', `Failed to add news: ${error?.message || 'Unknown error occurred'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -205,7 +344,7 @@ const AddNews = () => {
     <ScreenWrapper>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => router.back()}>
             <Feather name="arrow-left" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Add News</Text>
@@ -231,13 +370,16 @@ const AddNews = () => {
             <TextInput
               style={styles.input}
               value={title}
-              onChangeText={setTitle}
+              onChangeText={(text) => {
+                setTitle(text);
+                setIsNewForm(false);
+              }}
               placeholder="Enter news title"
               placeholderTextColor="#666"
             />
           </View>
 
-          {/* Date Input - Implemented from AddReminders.tsx */}
+          {/* Date Input */}
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Date</Text>
             <TouchableOpacity onPress={() => setShowDatePicker(true)}>
@@ -254,11 +396,19 @@ const AddNews = () => {
                 <DateTimePicker
                   value={date}
                   mode="date"
-                  display="spinner"
+                  display={Platform.OS === 'ios' ? "spinner" : "default"}
                   onChange={handleDateChange}
                   minimumDate={new Date()} // Prevent selecting past dates
                   textColor={Platform.OS === 'ios' ? "#fff" : undefined}
                 />
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity
+                    style={styles.iosPickerButton}
+                    onPress={() => setShowDatePicker(false)}
+                  >
+                    <Text style={styles.iosPickerButtonText}>Done</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
             {dateError ? <Text style={styles.errorText}>{dateError}</Text> : null}
@@ -269,7 +419,10 @@ const AddNews = () => {
             <TextInput
               style={styles.input}
               value={author}
-              onChangeText={setAuthor}
+              onChangeText={(text) => {
+                setAuthor(text);
+                setIsNewForm(false);
+              }}
               placeholder="Enter author or organizer name"
               placeholderTextColor="#666"
             />
@@ -281,7 +434,10 @@ const AddNews = () => {
               <TextInput
                 style={[styles.input, styles.locationInput]}
                 value={location}
-                onChangeText={setLocation}
+                onChangeText={(text) => {
+                  setLocation(text);
+                  setIsNewForm(false);
+                }}
                 placeholder="Enter venue location or select from map"
                 placeholderTextColor="#666"
               />
@@ -301,7 +457,10 @@ const AddNews = () => {
             <TextInput
               style={[styles.input, styles.textArea]} 
               value={description}
-              onChangeText={setDescription}
+              onChangeText={(text) => {
+                setDescription(text);
+                setIsNewForm(false);
+              }}
               placeholder="Enter detailed description"
               placeholderTextColor="#666"
               multiline
@@ -309,6 +468,9 @@ const AddNews = () => {
               textAlignVertical="top"
             />
           </View>
+          
+          {/* Add some space at the bottom */}
+          <View style={{ height: 100 }} />
         </ScrollView>
       </SafeAreaView>
     </ScreenWrapper>
@@ -328,6 +490,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
+    marginTop: 30,
   },
   headerTitle: {
     fontSize: 18,
@@ -379,6 +542,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     color: 'white',
     borderWidth: 1,
+    borderColor: 'transparent',
   },
   textArea: { 
     minHeight: 120,
@@ -391,6 +555,16 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     overflow: 'hidden',
     marginTop: 5,
+  },
+  iosPickerButton: {
+    backgroundColor: '#333',
+    padding: 10,
+    alignItems: 'center',
+  },
+  iosPickerButtonText: {
+    color: '#A020F0',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   locationContainer: {
     flexDirection: 'row',

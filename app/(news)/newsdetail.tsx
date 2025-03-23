@@ -5,50 +5,132 @@ import {
   Image, 
   TouchableOpacity, 
   ScrollView, 
-  SafeAreaView
+  SafeAreaView,
+  ActivityIndicator,
+  Linking,
+  Alert
 } from 'react-native';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Feather } from '@expo/vector-icons';
-import { useNavigation, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import ScreenWrapper from '@/components/ScreenWrapper';
+import { db } from "@/firebaseAuth";
+import { doc, getDoc } from 'firebase/firestore';
+
+// Interface for the news item
+interface NewsItem {
+  id?: string;
+  title: string;
+  date: string;
+  author: string;
+  location?: string;
+  description: string;
+  imageUrl?: string;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
+  contact?: string;
+}
 
 const NewsDetail = () => { 
-  const navigation = useNavigation();
+  const router = useRouter();
   const params = useLocalSearchParams();
+  const newsId = params.id as string;
+
+  const [newsItem, setNewsItem] = useState<NewsItem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
   
-  // Default data for each article based on the images you provided
-  const newsData = {
-    "1": {
-      title: "Super Car Meet Up",
-      date: "14th of November",
-      author: "Organized by Mr.Dilino",
-      location: "The Speedlane Club",
-      description: "Rev your engines and get ready for the ultimate Super Car Meet Up on 14th November! Witness some of the finest supercars in the country, featuring exotic models from Ferrari, Lamborghini, and more. Enjoy a day filled with automotive excellence, horsepower and style.",
-      contact: "+94 12 345 6789",
-      imageUri: "https://images.unsplash.com/photo-1614200187524-dc4b892acf16?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60"
-    },
-    "2": {
-      title: "Sri Lanka To Ease Vehicle Import Restrictions",
-      date: "posted on 18/11/2024",
-      author: "Sara Eddings",
-      description: "Sri Lanka is set to ease its vehicle import restrictions, marking a significant shift in the automotive industry. This decision is expected to have positive impacts on the local market, making cars more accessible and boosting economic activity. Consumers can anticipate better options and competitive pricing in the coming months. Stay tuned for further updates on policy changes and their impact on the industry.",
-      imageUri: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60"
+  useEffect(() => {
+    // Function to fetch news details from Firestore
+    const fetchNewsDetails = async () => {
+      if (!newsId) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        const newsDocRef = doc(db, "news", newsId);
+        const newsDoc = await getDoc(newsDocRef);
+        
+        if (newsDoc.exists()) {
+          setNewsItem({ id: newsDoc.id, ...newsDoc.data() as Omit<NewsItem, 'id'> });
+          console.log("News item loaded from Firestore:", newsDoc.id);
+        } else {
+          console.log("No news item found with ID:", newsId);
+        }
+      } catch (error: any) {
+        console.error("Error fetching news details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchNewsDetails();
+  }, [newsId]);
+
+  const handleCallOrganizer = (phoneNumber?: string) => {
+    if (phoneNumber) {
+      Linking.openURL(`tel:${phoneNumber}`);
+    } else {
+      Alert.alert("Contact Info", "No contact information available for this organizer.");
     }
   };
-
-  // Determine which article data to show
-  const newsId = params.id as string || "1";
-  const article = newsData[newsId as keyof typeof newsData];
   
-  // Check if viewing a car meet or regular news article
-  const isCarMeet = newsId === "1";
+  // Check if this is a car event
+  const isCarEvent = newsItem?.title?.toLowerCase().includes('car') || 
+                      newsItem?.title?.toLowerCase().includes('meet') ||
+                      newsItem?.description?.toLowerCase().includes('event');
+  
+  // Fallback image
+  const fallbackImage = "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60";
+  
+  if (loading) {
+    return (
+      <ScreenWrapper>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Feather name="arrow-left" size={24} color="white" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>News Detail</Text>
+            <View style={{ width: 24 }} />
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#A020F0" />
+          </View>
+        </SafeAreaView>
+      </ScreenWrapper>
+    );
+  }
+
+  if (!newsItem) {
+    return (
+      <ScreenWrapper>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Feather name="arrow-left" size={24} color="white" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>News Detail</Text>
+            <View style={{ width: 24 }} />
+          </View>
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>News item not found</Text>
+          </View>
+        </SafeAreaView>
+      </ScreenWrapper>
+    );
+  }
 
   return (
     <ScreenWrapper>
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => router.back()}>
             <Feather name="arrow-left" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>News Detail</Text>
@@ -57,52 +139,79 @@ const NewsDetail = () => {
 
         <ScrollView style={styles.content}>
           {/* Image */}
-          <Image source={{ uri: article.imageUri }} style={styles.image} />
+          {(newsItem.imageUrl && !imageError) ? (
+            <Image 
+              source={{ uri: newsItem.imageUrl }} 
+              style={styles.image}
+              onError={() => {
+                console.log("Image failed to load:", newsItem.imageUrl);
+                setImageError(true);
+              }}
+            />
+          ) : (
+            <Image 
+              source={{ uri: fallbackImage }} 
+              style={styles.image}
+            />
+          )}
 
           <View style={styles.detailsContainer}>
             {/* Title */}
-            <Text style={styles.title}>{article.title}</Text>
+            <Text style={styles.title}>{newsItem.title}</Text>
 
             {/* Display different info based on type */}
-            {isCarMeet ? (
+            {isCarEvent ? (
               <>
-                {/* Super Car event info */}
-                <Text style={styles.dateText}>{article.date}</Text>
-                <Text style={styles.subtitleText}>Super Car Meet Up – Experience the Thrill!</Text>
+                {/* Event info */}
+                <Text style={styles.dateText}>{newsItem.date}</Text>
+                <Text style={styles.subtitleText}>{newsItem.title} – Experience the Thrill!</Text>
                 
                 <Text style={styles.description}>
-                  {article.description}
+                  {newsItem.description}
                 </Text>
                 
-                <View style={styles.infoContainer}>
-                  <Text style={styles.infoLabel}>Location:</Text>
-                  <Text style={styles.infoText}></Text>
-                </View>
+                {newsItem.location && (
+                  <View style={styles.infoContainer}>
+                    <Text style={styles.infoLabel}>Location:</Text>
+                    <Text style={styles.infoText}>{newsItem.location}</Text>
+                  </View>
+                )}
                 
                 <View style={styles.infoContainer}>
                   <Text style={styles.infoLabel}>Organized by:</Text>
-                  <Text style={styles.infoText}>{article.author}</Text>
+                  <Text style={styles.infoText}>{newsItem.author}</Text>
                 </View>
                 
                 <Text style={styles.contactText}>Don't miss this exclusive event! Stay tuned for more details.</Text>
-                <Text style={styles.contactText}>Would you like to add a call to action, such as a registration link or contact info?</Text>
                 
-                <View style={styles.contactContainer}>
-                  <Feather name="phone" size={16} color="#A020F0" />
-                  <Text style={styles.contactNumber}></Text>
-                </View>
+                {newsItem.contact && (
+                  <TouchableOpacity 
+                    style={styles.contactContainer}
+                    onPress={() => handleCallOrganizer(newsItem.contact)}
+                  >
+                    <Feather name="phone" size={16} color="#A020F0" />
+                    <Text style={styles.contactNumber}>{newsItem.contact}</Text>
+                  </TouchableOpacity>
+                )}
               </>
             ) : (
               <>
                 {/* Regular news info */}
-                <Text style={styles.dateText}>{article.date}</Text>
+                <Text style={styles.dateText}>{newsItem.date}</Text>
                 <View style={styles.authorContainer}>
-                  <Text style={styles.authorText}>Author: {article.author}</Text>
+                  <Text style={styles.authorText}>Author: {newsItem.author}</Text>
                 </View>
                 
                 <Text style={styles.description}>
-                  {article.description}
+                  {newsItem.description}
                 </Text>
+
+                {newsItem.location && (
+                  <View style={styles.locationContainer}>
+                    <Feather name="map-pin" size={16} color="#A020F0" />
+                    <Text style={styles.locationText}>{newsItem.location}</Text>
+                  </View>
+                )}
               </>
             )}
           </View>
@@ -118,7 +227,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#121212',
-    marginTop: 70
   },
   header: {
     flexDirection: 'row',
@@ -126,6 +234,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
+    marginTop: 30,
   },
   headerTitle: {
     fontSize: 18,
@@ -139,6 +248,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 250,
     resizeMode: 'cover',
+  },
+  noImageContainer: {
+    width: '100%',
+    height: 250,
+    backgroundColor: '#1E1E1E',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   detailsContainer: {
     padding: 16,
@@ -210,5 +326,34 @@ const styles = StyleSheet.create({
     color: '#A020F0',
     marginLeft: 8,
     fontWeight: '500',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    backgroundColor: 'rgba(160, 32, 240, 0.1)',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  locationText: {
+    fontSize: 14,
+    color: '#fff',
+    marginLeft: 8,
   },
 });
