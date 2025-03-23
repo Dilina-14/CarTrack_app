@@ -2,11 +2,9 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from "expo-router";
-import AsyncStorage from '@react-native-async-storage/async-storage'; // ✅ CHANGED
-
 import { getAuth } from "firebase/auth";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
-import { app } from "../../firebaseAuth"; 
+import { app } from "../../firebaseAuth";
 
 const AddReminder = () => {
   const [title, setTitle] = useState("");
@@ -20,15 +18,35 @@ const AddReminder = () => {
   const handleDateChange = (event: any, selectedDate: Date | undefined) => {
     const currentDate = selectedDate || date;
     setShowDatePicker(false);
-    setDate(currentDate);
-    setErrors((prev) => ({ ...prev, date: "" }));
+
+    // Get the current date without time
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Check if the selected date is before the current date
+    if (currentDate < today) {
+      setErrors((prev) => ({ ...prev, date: "Please select today or a future date." }));
+    } else {
+      setDate(currentDate);
+      setErrors((prev) => ({ ...prev, date: "" }));
+    }
   };
 
   const handleTimeChange = (event: any, selectedTime: Date | undefined) => {
     const currentTime = selectedTime || time;
     setShowTimePicker(false);
-    setTime(currentTime);
-    setErrors((prev) => ({ ...prev, time: "" }));
+
+    // Get the current date and time
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Check if the selected date is today and the selected time is before the current time
+    if (date.toDateString() === today.toDateString() && currentTime < now) {
+      setErrors((prev) => ({ ...prev, time: "Please select a future time." }));
+    } else {
+      setTime(currentTime);
+      setErrors((prev) => ({ ...prev, time: "" }));
+    }
   };
 
   const handleSave = async () => {
@@ -40,13 +58,17 @@ const AddReminder = () => {
       hasError = true;
     }
 
-    if (!date) {
-      newErrors.date = "Date is required.";
+    // Check if the date is valid (today or future)
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (!date || date < today) {
+      newErrors.date = "Please select today or a future date.";
       hasError = true;
     }
 
-    if (!time) {
-      newErrors.time = "Time is required.";
+    // Check if the time is valid (future time if the date is today)
+    if (!time || (date.toDateString() === today.toDateString() && time < now)) {
+      newErrors.time = "Please select a valid future time.";
       hasError = true;
     }
 
@@ -79,8 +101,7 @@ const AddReminder = () => {
 
         console.log("Reminder saved to Firestore!");
 
-        // Navigate to the index in tabs
-        router.push("../(tabs)");
+        router.push("../other/reminders");
       } catch (error) {
         console.error("Error saving reminder:", error);
       }
@@ -127,6 +148,7 @@ const AddReminder = () => {
                 mode="date"
                 display="spinner"
                 onChange={handleDateChange}
+                minimumDate={new Date()} // Prevent selecting past dates
                 textColor="#FFF"
               />
             </View>
@@ -200,7 +222,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 30,
-    color: "#C3FF65",
+    color: "#FF9D42",
     fontWeight: "bold",
     marginBottom: 30,
     paddingLeft: 30,
@@ -210,7 +232,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
   },
   label: {
-    color: "#FFF",
+    color: "#FF9D42",
     fontSize: 16,
     marginTop: 10,
     marginBottom: 10,
@@ -234,23 +256,23 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     borderWidth: 1,
-    borderColor: "#C3FF65",
+    borderColor: "#FF9D42",
     paddingVertical: 10,
     paddingHorizontal: 30,
     borderRadius: 20,
   },
   cancelText: {
-    color: "#C3FF65",
+    color: "#FF9D42",
     fontSize: 16,
   },
   saveButton: {
-    backgroundColor: "#C3FF65",
+    backgroundColor: "#FF9D42",
     paddingVertical: 10,
     paddingHorizontal: 40,
     borderRadius: 20,
   },
   saveText: {
-    color: "#121212",
+    color: "#000",
     fontSize: 16,
     fontWeight: "bold",
   },
