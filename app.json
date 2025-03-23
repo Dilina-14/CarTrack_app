@@ -26,10 +26,7 @@
       "permissions": [
         "WRITE_EXTERNAL_STORAGE",
         "READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.DOWNLOAD_WITHOUT_NOTIFICATION",
-        "android.permission.ACCESS_MEDIA_LOCATION"
+        "DOWNLOAD_WITHOUT_NOTIFICATION"
       ]
     },
     "web": {

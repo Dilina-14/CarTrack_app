@@ -8,7 +8,7 @@ import { useRouter } from "expo-router";
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as Notifications from 'expo-notifications';
-import * as MediaLibrary from 'expo-media-library';
+import * as DocumentPicker from 'expo-document-picker';
 import { ref, getDownloadURL, listAll, getStorage } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebaseAuth';
@@ -34,15 +34,7 @@ const LegalSupportScreen = () => {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredDocuments, setFilteredDocuments] = useState<DocumentItem[]>([]);
-
-  // Request media library permissions
-  const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
-
-  useEffect(() => {
-    if (!permissionResponse || !permissionResponse.granted) {
-      requestPermission();
-    }
-  }, [permissionResponse]);
+  const [downloading, setDownloading] = useState(false);
 
   // Fetch documents from Firebase on component mount
   useEffect(() => {
@@ -67,15 +59,15 @@ const LegalSupportScreen = () => {
       const storageRef = ref(storage, 'legal-documents');
       const result = await listAll(storageRef);
 
-      console.log("Firebase Storage result:", result); // Log the result
+      console.log("Firebase Storage result:", result);
 
       const docsPromises = result.items.map(async (itemRef) => {
         const url = await getDownloadURL(itemRef);
         const name = itemRef.name;
         const uploadDate = new Date().toLocaleDateString();
 
-        console.log("File URL:", url); // Log the file URL
-        console.log("File Name:", name); // Log the file name
+        console.log("File URL:", url);
+        console.log("File Name:", name);
 
         return {
           id: name,
@@ -107,110 +99,96 @@ const LegalSupportScreen = () => {
     }
   };
 
-  const handleDocumentPress = (id: string, title: string) => {
-    router.push({
-      pathname: "/other/legalSupport",
-      params: { id, title }
-    });
-  };
-
   const downloadDocument = async (document: DocumentItem) => {
     try {
       const { url, title } = document;
-
+  
       if (!url) {
         Alert.alert("Error", "Document URL not available");
         return;
       }
-
-      // Check media library permissions
-      if (!permissionResponse || !permissionResponse.granted) {
-        Alert.alert("Permission Denied", "We need storage permission to save files to your device.");
+  
+      // Prevent multiple downloads at once
+      if (downloading) {
         return;
       }
-
+  
+      setDownloading(true);
+  
       // Show downloading indicator
       Alert.alert("Downloading", `${title} is being downloaded...`);
-
-      // Create a temporary file path in the cache directory
+  
+      // Create a file path in the cache directory
       const fileUri = `${FileSystem.cacheDirectory}${title}.pdf`;
-
-      // Download the file
-      const downloadResult = await FileSystem.downloadAsync(url, fileUri);
-
-      if (!downloadResult || !downloadResult.uri) {
-        throw new Error("Download failed");
+  
+      // Create a download resumer to track download progress
+      const downloadResumable = FileSystem.createDownloadResumable(
+        url,
+        fileUri,
+        {},
+        (downloadProgress) => {
+          const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
+          console.log(`Download progress: ${progress * 100}%`);
+        }
+      );
+  
+      // Start the download
+      const result = await downloadResumable.downloadAsync();
+      
+      if (!result) {
+        throw new Error("Download failed - no result returned");
       }
-
-      // Save the file to the device's Downloads folder
-      if (Platform.OS === 'android') {
-        try {
-          const asset = await MediaLibrary.createAssetAsync(downloadResult.uri);
-          let album = await MediaLibrary.getAlbumAsync("Downloads");
-
-          if (!album) {
-            // If the Downloads album doesn't exist, create it
-            album = await MediaLibrary.createAlbumAsync("Downloads", asset, false);
-          } else {
-            // Add the file to the existing Downloads album
-            await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
-          }
-
-          // Notify the user
-          await Notifications.scheduleNotificationAsync({
-            content: {
-              title: "Download Successful",
-              body: `${title} has been saved to your Downloads folder.`,
-            },
-            trigger: null,
-          });
-
-          Alert.alert(
-            "Download Complete",
-            `${title} has been saved to your Downloads folder.`
-          );
-        } catch (mediaError) {
-          console.error("MediaLibrary error:", mediaError);
-
-          // Fallback: Share the file if saving to Downloads fails
-          if (await Sharing.isAvailableAsync()) {
-            await Sharing.shareAsync(downloadResult.uri, {
-              mimeType: 'application/pdf',
-              dialogTitle: `Share ${title}`,
-            });
-
-            Alert.alert(
-              "Download Complete",
-              `${title} could not be saved directly to Downloads. Please save it manually from the share menu.`
-            );
-          } else {
-            Alert.alert(
-              "Download Error",
-              "Could not save or share the file. Please try again."
-            );
-          }
-        }
+  
+      // Now safely access the uri property
+      const uri = result.uri;
+      
+      if (!uri) {
+        throw new Error("Download failed - no URI returned");
+      }
+  
+      // Check if sharing is available
+      const isSharingAvailable = await Sharing.isAvailableAsync();
+  
+      if (isSharingAvailable) {
+        // Share the file
+        await Sharing.shareAsync(uri, {
+          mimeType: 'application/pdf',
+          UTI: 'com.adobe.pdf', // for iOS
+          dialogTitle: `Save or open ${title}`,
+        });
+  
+        // Schedule a notification
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "File Downloaded",
+            body: `${title} is ready to view or save`,
+          },
+          trigger: null, // Immediately show notification
+        });
       } else {
-        // For iOS, share the file so the user can save it manually
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(downloadResult.uri, {
-            UTI: 'com.adobe.pdf',
-            mimeType: 'application/pdf',
-          });
-        } else {
-          Alert.alert(
-            "Download Complete",
-            `${title} has been downloaded but cannot be shared. Please try again.`
-          );
-        }
+        // If sharing is not available, just alert the user
+        Alert.alert(
+          "Download Complete",
+          `${title} has been downloaded to ${uri}`
+        );
       }
     } catch (error) {
       console.error("Download error:", error);
       Alert.alert(
         "Download Failed",
-        "There was an error downloading the document."
+        `There was an error downloading the document. ${error instanceof Error ? error.message : String(error)}`
       );
+    } finally {
+      // Reset downloading state
+      setDownloading(false);
     }
+  };
+
+  const handleDocumentPress = (id: string, title: string) => {
+    router.push({
+      pathname: "/other/legalSupport",
+      params: { id, title }
+    });
   };
 
   const FilterModal = () => (
@@ -289,10 +267,7 @@ const LegalSupportScreen = () => {
           {filteredDocuments.length > 0 ? (
             filteredDocuments.map((item) => (
               <View key={item.id} style={styles.documentItem}>
-                <TouchableOpacity
-                  style={styles.documentContent}
-                  onPress={() => handleDocumentPress(item.id, item.title)}
-                >
+                <View style={styles.documentContent}>
                   <View style={styles.documentIconContainer}>
                     <Ionicons name="document-text-outline" size={30} color="#fff" />
                   </View>
@@ -300,10 +275,11 @@ const LegalSupportScreen = () => {
                     <Text style={styles.documentTitle}>{item.title}</Text>
                     <Text style={styles.documentDate}>Uploaded Date - {item.date}</Text>
                   </View>
-                </TouchableOpacity>
+                </View>
                 <TouchableOpacity
                   style={styles.downloadButton}
                   onPress={() => downloadDocument(item)}
+                  disabled={downloading}
                 >
                   <Ionicons name="download-outline" size={20} color="#fff" />
                 </TouchableOpacity>
