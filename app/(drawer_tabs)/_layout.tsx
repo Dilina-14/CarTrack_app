@@ -27,7 +27,6 @@ const CustomDrawerContent = (props: DrawerContentComponentProps) => {
     { id: 'index', icon: 'home', label: 'Home', screen: '/(drawer_tabs)/' },
     { id: 'news', icon: 'newspaper', label: 'News', screen: '/(drawer_tabs)/news' },
     { id: 'marketplace', icon: 'cart', label: 'Marketplace', screen: '/(drawer_tabs)/marketplace' },
-    { id: 'legalsupport', icon: 'document', label: 'Legal Support', screen: '/other/legalSupport' },
     { id: 'reportsPage', icon: 'document-text', label: 'ReportsPage', screen: '/other/reportsPage' },
     { id: 'profile', icon: 'person', label: 'Profile', screen: '/(drawer_tabs)/profile' },
     { id: 'chatbot', icon: 'chatbubble', label: 'ChatBot', screen: '/(drawer_tabs)/chatbot' },
