@@ -1,27 +1,137 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Image } from 'react-native';
-import React, { useState } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Image, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import ScreenWrapper from '@/components/ScreenWrapper';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Location from 'expo-location';
 
+interface LocationData {
+  name: string;
+  latitude: number;
+  longitude: number;
+}
 
-const addnews = () => {
+const AddNews = () => {
   const navigation = useNavigation();
   const router = useRouter();
+  const params = useLocalSearchParams<{ locationData?: string }>(); // Retrieve locationData from params
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [author, setAuthor] = useState('');
-  const [distance, setDistance] = useState('');
+  const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [imageUri, setImageUri] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [mapCoordinates, setMapCoordinates] = useState<{ latitude: number, longitude: number } | null>(null);
 
-  const handleAddImage = () => {
-    setImageUri('https://images.unsplash.com/photo-1614200187524-dc4b892acf16?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60');
+  // Parse locationData from params
+  useEffect(() => {
+    if (params.locationData) {
+      try {
+        const locationData = JSON.parse(params.locationData) as LocationData;
+        setLocation(locationData.name);
+        setMapCoordinates({
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
+        });
+      } catch (error) {
+        console.error("Error parsing location data:", error);
+      }
+    }
+  }, [params.locationData]);
+
+  // Request permissions for accessing media library
+  const requestMediaLibraryPermission = async () => {
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Sorry, we need camera roll permissions to upload images!');
+        return false;
+      }
+      return true;
+    }
+    return true;
+  };
+
+  // Handle image picking from gallery
+  const handlePickImage = async () => {
+    const hasPermission = await requestMediaLibraryPermission();
+    
+    if (hasPermission) {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 1,
+      });
+      
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setImageUri(result.assets[0].uri);
+      }
+    }
+  };
+
+  // Handle date change
+  const handleDateChange = (event: any, selected?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selected) {
+      setSelectedDate(selected);
+      const day = selected.getDate();
+      const month = selected.toLocaleString('default', { month: 'long' });
+      const getOrdinalSuffix = (d: number) => {
+        if (d > 3 && d < 21) return 'th';
+        switch (d % 10) {
+          case 1: return 'st';
+          case 2: return 'nd';
+          case 3: return 'rd';
+          default: return 'th';
+        }
+      };
+      const formattedDate = `${day}${getOrdinalSuffix(day)} of ${month}`;
+      setDate(formattedDate);
+    }
+  };
+
+  const showDatePickerModal = () => {
+    setShowDatePicker(true);
+  };
+
+  const handleSelectLocation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access location was denied');
+        return;
+      }
+
+      // Navigate to SelectLocation screen
+      router.push({
+        pathname: "/(news)/selectlocation",
+      });
+    } catch (error) {
+      console.error("Error accessing location:", error);
+      alert('Failed to access location services');
+    }
   };
 
   const handleSubmit = () => {
-    navigation.goBack();
+    const newsData = {
+      title,
+      date,
+      author,
+      location,
+      description,
+      imageUri,
+      coordinates: mapCoordinates,
+    };
+    console.log("Submitting news:", newsData);
+    
+    // Use the router to navigate back to the main news screen
+    router.back();
   };
 
   return (
@@ -38,7 +148,7 @@ const addnews = () => {
         </View>
 
         <ScrollView style={styles.form}>
-          <TouchableOpacity style={styles.imageUpload} onPress={handleAddImage}>
+          <TouchableOpacity style={styles.imageUpload} onPress={handlePickImage}>
             {imageUri ? (
               <Image source={{ uri: imageUri }} style={styles.uploadedImage} />
             ) : (
@@ -62,13 +172,27 @@ const addnews = () => {
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Date</Text>
-            <TextInput
-              style={styles.input}
-              value={date}
-              onChangeText={setDate}
-              placeholder="Enter date (e.g., 14th of November)"
-              placeholderTextColor="#666"
-            />
+            <TouchableOpacity onPress={showDatePickerModal}>
+              <View style={styles.datePickerButton}>
+                <TextInput
+                  style={styles.input}
+                  value={date}
+                  placeholder="Select date"
+                  placeholderTextColor="#666"
+                  editable={false}
+                />
+                <Feather name="calendar" size={20} color="#A020F0" style={styles.dateIcon} />
+              </View>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                testID="dateTimePicker"
+                value={selectedDate}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleDateChange}
+              />
+            )}
           </View>
 
           <View style={styles.inputContainer}>
@@ -83,15 +207,24 @@ const addnews = () => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Distance (optional)</Text>
-            <TextInput
-              style={styles.input}
-              value={distance}
-              onChangeText={setDistance}
-              placeholder="Enter distance (e.g., 235 km)"
-              placeholderTextColor="#666"
-              keyboardType="numeric"
-            />
+            <Text style={styles.label}>Location (Venue) <Text style={styles.optionalText}>(optional)</Text></Text>
+            <View style={styles.locationContainer}>
+              <TextInput
+                style={[styles.input, styles.locationInput]}
+                value={location}
+                onChangeText={setLocation}
+                placeholder="Enter venue location or select from map"
+                placeholderTextColor="#666"
+              />
+              <TouchableOpacity style={styles.mapButton} onPress={handleSelectLocation}>
+                <Feather name="map-pin" size={20} color="white" />
+              </TouchableOpacity>
+            </View>
+            {mapCoordinates && (
+              <Text style={styles.coordinatesText}>
+                Location selected from map
+              </Text>
+            )}
           </View>
 
           <View style={styles.inputContainer}>
@@ -113,7 +246,7 @@ const addnews = () => {
   );
 };
 
-export default addnews;
+export default AddNews;
 
 const styles = StyleSheet.create({
   container: {
@@ -166,6 +299,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
+  optionalText: {
+    fontSize: 12,
+    color: '#888',
+    fontWeight: '400',
+  },
   input: {
     backgroundColor: '#121212',
     padding: 10,
@@ -177,5 +315,35 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     padding: 10,
     color: 'white',
+  },
+  datePickerButton: {
+    position: 'relative',
+  },
+  dateIcon: {
+    position: 'absolute',
+    right: 12,
+    top: 10,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locationInput: {
+    flex: 1,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+  mapButton: {
+    backgroundColor: '#A020F0',
+    padding: 11.5,
+    borderTopRightRadius: 5,
+    borderBottomRightRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  coordinatesText: {
+    color: '#A020F0',
+    fontSize: 12,
+    marginTop: 4,
   },
 });

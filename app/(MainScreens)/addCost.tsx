@@ -147,7 +147,6 @@ const AddCost = () => {
               onValueChange={(itemValue) => setCategory(itemValue)}
               style={{ height: 55, color: "#FFF", borderRadius: 20 }}
               dropdownIconColor="#FFF"
-              itemStyle={styles.pickerItem}
             >
               <Picker.Item label="Fuel (Default)" value="Fuel" />
               <Picker.Item label="Maintenance" value="Maintenance" />
@@ -226,11 +225,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#1E1E1E",
     borderRadius: 20,
     overflow: "hidden",
-  },
-  pickerItem: {
-    backgroundColor: "#1E1E1E",
-    color: "#1E1E1E",
-    borderRadius: 25,
   },
   buttonContainer: {
     flexDirection: "row",

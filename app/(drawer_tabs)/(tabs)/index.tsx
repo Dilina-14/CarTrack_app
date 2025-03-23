@@ -1,6 +1,4 @@
-import React from "react";
-import { useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useState } from "react";
 import {
   ScrollView,
   View,
@@ -8,7 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Modal,
-  Pressable
+  Pressable,
 } from "react-native";
 import {
   CurrencyDollar,
@@ -23,13 +21,22 @@ import {
   Trash,
   X,
   BellRinging,
-  BellSimpleRinging
+  BellSimpleRinging,
 } from "phosphor-react-native";
 import { colors } from "@/constants/theme";
 import { router } from "expo-router";
 
 import { getAuth } from "firebase/auth";
-import { getFirestore, collection, query, where, onSnapshot, deleteDoc, doc, getDoc } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  getDoc,
+} from "firebase/firestore";
 import { app } from "../../../firebaseAuth"; // Adjust the path to your Firebase config file
 import TopBar from "@/components/TopBar";
 import ScreenWrapper from "@/components/ScreenWrapper";
@@ -49,11 +56,10 @@ interface UserData {
   phoneNumber: string;
 }
 
-const Index = () => {
-  const [userName, setUserName] = useState<string>(''); // Add this new state for user name
-  const [loading, setLoading] = useState<boolean>(true); // Optional loading state
+const HomeScreen = () => {
+  const [userName, setUserName] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Fetch user data when the component mounts
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -62,16 +68,16 @@ const Index = () => {
         const currentUser = auth.currentUser;
         if (currentUser) {
           const db = getFirestore(app);
-          const userDocRef = doc(db, 'users', currentUser.uid);
+          const userDocRef = doc(db, "users", currentUser.uid);
           const userDocSnap = await getDoc(userDocRef);
-          
+
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data() as UserData;
-            setUserName(userData.name || '');
+            setUserName(userData.name || "");
           }
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error("Error fetching user data:", error);
       } finally {
         setLoading(false);
       }
@@ -79,13 +85,70 @@ const Index = () => {
 
     fetchUserData();
   }, []);
-}
 
+  return (
+    <ScreenWrapper>
+      <TopBar />
+      <View style={styles.container}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Text style={styles.greeting}>
+            {loading ? "Loading..." : `Hello, ${userName || "User"}`}
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContainer}
+          >
+            <TouchableOpacity
+              onPress={() => router.push("/(MainScreens)/addCost")}
+            >
+              <View style={[styles.iconContainer, { borderColor: "#C6FF66" }]}>
+                <CurrencyDollar size={43} color="#C6FF66" weight="bold" />
+                <Text style={[styles.iconText, { color: "#C6FF66" }]}>
+                  Add Cost
+                </Text>
+              </View>
+            </TouchableOpacity>
 
-// Expense List Component
+            <TouchableOpacity onPress={() => router.push("./../other/reminders")}>
+              <View style={[styles.iconContainer, { borderColor: "#FD8412" }]}>
+                <BellSimpleRinging size={43} color="#FD8412" weight="bold" />
+                <Text style={[styles.iconText, { color: "#FD8412" }]}>
+                  Reminders
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push("/other/reportsPage")}>
+              <View style={[styles.iconContainer, { borderColor: "#1570EF" }]}>
+                <BookOpen size={43} color="#1570EF" weight="bold" />
+                <Text style={[styles.iconText, { color: "#1570EF" }]}>
+                  Reports
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push("../(tabs)/news")}>
+              <View style={[styles.iconContainer, { borderColor: "#A020F0" }]}>
+                <Newspaper size={43} color="#A020F0" weight="bold" />
+                <Text style={[styles.iconText, { color: "#A020F0" }]}>News</Text>
+              </View>
+            </TouchableOpacity>
+          </ScrollView>
+
+          <ExpenseGraph />
+          <ExpenseList />
+        </ScrollView>
+      </View>
+    </ScreenWrapper>
+  );
+};
+
 const ExpenseList = () => {
   const [expenseItems, setExpenseItems] = useState<ExpenseItem[]>([]);
-  const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(null);
+  const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(
+    null
+  );
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
@@ -119,7 +182,6 @@ const ExpenseList = () => {
       setExpenseItems(expenses);
     });
 
-    // Removed redundant fetchExpenses() call
     return () => unsubscribe();
   }, []);
 
@@ -164,17 +226,11 @@ const ExpenseList = () => {
         contentContainerStyle={styles.expenseScrollContent}
       >
         {expenseItems.length === 0 ? (
-          // Display this message when the list is empty
           <Text style={styles.instructionText}>No expenses in the list</Text>
         ) : (
-          [...expenseItems].reverse().map((item, index) => (
-            <Pressable
-              key={item.id}
-              onPress={() => handleExpensePress(item)}
-              onLongPress={() => handleDeleteExpense(item.id)} // Pass the unique id
-            >
+          [...expenseItems].reverse().map((item) => (
+            <Pressable key={item.id} onPress={() => handleExpensePress(item)}>
               <View style={styles.expenseItem}>
-                {/* Icon and Details */}
                 <View style={styles.expenseIconSection}>
                   <View
                     style={[
@@ -205,50 +261,42 @@ const ExpenseList = () => {
                   </View>
                 </View>
 
-                {/* Amount */}
                 <View style={styles.expenseAmountContainer}>
                   <Text style={styles.expenseAmount}>
-                    {`LKR.${parseFloat(item.amount).toFixed(2).length > 12
-                      ? `${parseFloat(item.amount).toFixed(2).slice(0, 11)}...`
-                      : parseFloat(item.amount).toFixed(2)}`}
+                    {`LKR.${parseFloat(item.amount).toFixed(2)}`}
                   </Text>
                 </View>
               </View>
             </Pressable>
           ))
         )}
-
       </ScrollView>
-      
+
       <Modal
         transparent={true}
         visible={modalVisible}
         animationType="fade"
-        onRequestClose={() => setModalVisible(false)} // Close modal when background is touched
+        onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          {/* Background Pressable */}
           <Pressable
             style={styles.modalOverlayPressable}
-            onPress={() => setModalVisible(false)} // Close modal on background press
+            onPress={() => setModalVisible(false)}
           />
 
-          {/* Close Icon */}
           <Pressable
             style={styles.closeIcon}
-            onPress={() => setModalVisible(false)} // Close modal when "X" is pressed
+            onPress={() => setModalVisible(false)}
           >
-            <X size={24} color="white" weight="bold" /> {/* Close Icon */}
+            <X size={24} color="white" weight="bold" />
           </Pressable>
 
-          {/* Modal Content */}
           <View style={styles.modalContainer}>
             {selectedExpense && (
               <ScrollView
                 contentContainerStyle={styles.modalScrollContent}
-                nestedScrollEnabled={true} // Allow nested scrolling
+                nestedScrollEnabled={true}
               >
-                {/* Icon and Details */}
                 <View style={styles.modalHeader}>
                   <View
                     style={[
@@ -267,38 +315,35 @@ const ExpenseList = () => {
                       },
                     ]}
                   >
-                    {renderIcon(selectedExpense.category, 45)} {/* Pass size 45 */}
+                    {renderIcon(selectedExpense.category, 45)}
                   </View>
                   <View style={styles.modalDetails}>
                     <Text style={styles.modalDetailText}>
                       Category : {selectedExpense.category}
                     </Text>
                     <Text style={styles.modalDetailText}>
-                      Date     : {selectedExpense.date}
+                      Date : {selectedExpense.date}
                     </Text>
                     <Text style={styles.modalDetailText}>
-                      Amount   : LKR.{parseFloat(selectedExpense.amount).toFixed(2)}
+                      Amount : LKR.{parseFloat(selectedExpense.amount).toFixed(2)}
                     </Text>
                   </View>
                 </View>
 
-                {/* Separator Line */}
                 <View style={styles.modalSeparator} />
 
-                {/* Note/Description */}
                 <Text style={styles.modalDescription}>
                   {selectedExpense.note || "No description available"}
                 </Text>
 
-                {/* Delete Button */}
                 <Pressable
                   style={styles.deleteButton}
                   onPress={() => {
-                    handleDeleteExpense(selectedExpense.id); // Delete the selected expense
-                    setModalVisible(false); // Hide the modal
+                    handleDeleteExpense(selectedExpense.id);
+                    setModalVisible(false);
                   }}
                 >
-                  <Trash size={24} color="white" weight="bold" /> {/* Trash Icon */}
+                  <Trash size={24} color="white" weight="bold" />
                 </Pressable>
               </ScrollView>
             )}
@@ -310,7 +355,7 @@ const ExpenseList = () => {
 };
 
 const ExpenseGraph = () => {
-  const [fuelExpenses, setFuelExpenses] = useState<number[]>([]);
+  const [allExpenses, setAllExpenses] = useState<number[]>([]);
   const [totalExpenditure, setTotalExpenditure] = useState<number>(0);
   const [averageDailySpending, setAverageDailySpending] = useState<number>(0);
 
@@ -325,14 +370,9 @@ const ExpenseGraph = () => {
 
     const userId = user.uid;
 
-    // Fetch fuel expenses from Firestore
     const db = getFirestore(app);
     const expensesRef = collection(db, "expenses");
-    const q = query(
-      expensesRef,
-      where("userId", "==", userId),
-      where("category", "==", "Fuel") // Filter by fuel expenses
-    );
+    const q = query(expensesRef, where("userId", "==", userId));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const expenses: number[] = [];
@@ -345,32 +385,28 @@ const ExpenseGraph = () => {
         total += amount;
       });
 
-      setFuelExpenses(expenses);
+      setAllExpenses(expenses);
       setTotalExpenditure(total);
 
-
-      const days = 30; // 30 day per month
+      const days = 30; // 30 days per month
       const average = total / days;
       setAverageDailySpending(average);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
-  // Generate bar data for the graph
-  const barData = fuelExpenses.map((amount, index) => ({
+  const barData = allExpenses.map((amount, index) => ({
     value: amount,
     key: index.toString(),
   }));
 
-  const maxValue = Math.max(...barData.map((item) => item.value), 1); // Ensure maxValue is at least 1
+  const maxValue = Math.max(...barData.map((item) => item.value), 1);
 
   return (
     <View style={styles.graphContainer}>
-      <Text style={styles.graphTitle}>Fuel Expense - Monthly</Text>
+      <Text style={styles.graphTitle}>Expenses - Monthly</Text>
 
-      {/* Graph */}
       <View style={styles.chartArea}>
         <View style={styles.yAxisLabels}>
           <Text style={styles.axisLabel}>{maxValue.toFixed(1)}k</Text>
@@ -380,12 +416,10 @@ const ExpenseGraph = () => {
         </View>
 
         <View style={styles.chartContent}>
-          {/* Horizontal grid lines */}
           {[0, 1, 2, 3].map((_, index) => (
             <View key={`line-${index}`} style={styles.gridLine} />
           ))}
 
-          {/* Bars */}
           <View style={styles.barsContainer}>
             {barData.map((item) => (
               <View key={item.key} style={styles.barWrapper}>
@@ -404,107 +438,22 @@ const ExpenseGraph = () => {
         </View>
       </View>
 
-      {/* Expense Summary */}
       <View style={styles.expenseSummary}>
         <View>
           <Text style={styles.expenseLabel}>Total Expenditure</Text>
-          <Text style={styles.expenseValue}>LKR.{totalExpenditure.toFixed(2)}</Text>
+          <Text style={styles.expenseValue}>
+            LKR.{totalExpenditure.toFixed(2)}
+          </Text>
         </View>
 
         <View>
           <Text style={styles.expenseLabel}>Average Daily Spending</Text>
-          <Text style={styles.expenseValue}>LKR.{averageDailySpending.toFixed(2)}</Text>
+          <Text style={styles.expenseValue}>
+            LKR.{averageDailySpending.toFixed(2)}
+          </Text>
         </View>
       </View>
     </View>
-  );
-};
-
-const HomeScreen = () => {
-  const [userName, setUserName] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setLoading(true);
-        const auth = getAuth();
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          const db = getFirestore(app);
-          const userDocRef = doc(db, 'users', currentUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          
-          if (userDocSnap.exists()) {
-            const userData = userDocSnap.data() as UserData;
-            setUserName(userData.name || '');
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  return (
-    <ScreenWrapper>
-      
-    <TopBar />
-
-    <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-      <Text style={styles.greeting}>
-        {loading ? 'Loading...' : `Hello, ${userName || 'User'}`}
-      </Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContainer}
-        >
-          <TouchableOpacity onPress={() => router.push("/(MainScreens)/addCost")}>
-            <View style={[styles.iconContainer, { borderColor: "#C6FF66" }]}>
-              <CurrencyDollar size={43} color="#C6FF66" weight="bold" />
-              <Text style={[styles.iconText, { color: "#C6FF66" }]}>
-                Add Cost
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.push("./../other/reminders")}>
-            <View style={[styles.iconContainer, { borderColor: "#FD8412" }]}>
-              <BellSimpleRinging size={43} color="#FD8412" weight="bold" />
-              <Text style={[styles.iconText, { color: "#FD8412" }]}>Reminders</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.push("/other/reportsPage")}>
-            <View style={[styles.iconContainer, { borderColor: "#1570EF" }]}>
-              <BookOpen size={43} color="#1570EF" weight="bold" />
-              <Text style={[styles.iconText, { color: "#1570EF" }]}>
-                Reports
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.push("../(tabs)/news")}>
-            <View style={[styles.iconContainer, { borderColor: "#A020F0" }]}>
-              <Newspaper size={43} color="#A020F0" weight="bold" />
-              <Text style={[styles.iconText, { color: "#A020F0" }]}>News</Text>
-            </View>
-          </TouchableOpacity>
-        </ScrollView>
-
-        <ExpenseGraph />
-
-        <ExpenseList />
-
-      </ScrollView>
-    </View>
-    </ScreenWrapper>
   );
 };
 

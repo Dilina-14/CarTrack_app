@@ -1,64 +1,138 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, TouchableOpacity } from "react-native";
-import React from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
+import React, { useEffect, useState } from "react";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from '@react-navigation/native';
+import { router } from "expo-router";
+import { getAuth } from "firebase/auth";
+import { getFirestore, collection, query, where, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { app } from "../../firebaseAuth";
+
+type Reminder = {
+  id: string;
+  userId: string;
+  title: string;
+  date: string;
+  time: string;
+  description?: string;
+};
 
 const Reminders = () => {
-  // Data for reminders matching the image
-  const reminders = [
-    {
-      id: '1',
-      title: 'Check Brake Fluid',
-      date: '18/11/2024',
-    },
-    {
-      id: '2',
-      title: 'Get License',
-      date: '01/10/2025',
-    },
-    {
-      id: '3',
-      title: 'Check Coolant status before trip',
-      date: '01/10/2025',
-    },
-  ];
-  const navigation = useNavigation();
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchReminders = async () => {
+    try {
+      setLoading(true);
+      const auth = getAuth();
+      const user = auth.currentUser;
+      
+      if (!user) {
+        console.error("User not authenticated");
+        setLoading(false);
+        return;
+      }
+      
+      const db = getFirestore(app);
+      const remindersRef = collection(db, "reminders");
+      const q = query(remindersRef, where("userId", "==", user.uid));
+      const querySnapshot = await getDocs(q);
+      
+      const remindersList: Reminder[] = [];
+      querySnapshot.forEach((doc) => {
+        remindersList.push({
+          id: doc.id,
+          ...doc.data()
+        } as Reminder);
+      });
+
+      remindersList.sort((a, b) => {
+        const dateA = new Date(`${a.date}T${a.time}`);
+        const dateB = new Date(`${b.date}T${b.time}`);
+        return dateA.getTime() - dateB.getTime();
+      });
+      
+      setReminders(remindersList);
+    } catch (error) {
+      console.error("Error fetching reminders:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteReminder = async (id: string) => {
+    try {
+      const db = getFirestore(app);
+      await deleteDoc(doc(db, "reminders", id));
+      
+      setReminders(reminders.filter(reminder => reminder.id !== id));
+    } catch (error) {
+      console.error("Error deleting reminder:", error);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
+  useEffect(() => {
+    fetchReminders();
+  }, []);
+
   return (
     <ScreenWrapper>
       <View style={styles.container}>
-        {/* Header with back button */}
         <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => router.push('../../(tabs)')}>
             <Ionicons name="arrow-back" size={28} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        {/* Reminders Title */}
         <Text style={styles.header}>Reminders</Text>
 
-        {/* List of Reminders */}
-        <ScrollView style={styles.remindersList}>
-          {reminders.map((item) => (
-            <View key={item.id} style={styles.reminderItem}>
-              <View style={styles.reminderContent}>
-                <View style={styles.bellIconContainer}>
-                  <Ionicons name="notifications-outline" size={30} color="#fff" />
-                </View>
-                <View style={styles.reminderTextContainer}>
-                  <Text style={styles.reminderTitle}>{item.title}</Text>
-                  <Text style={styles.reminderDate}>Reminder Date - {item.date}</Text>
-                </View>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#C3FF65" />
+          </View>
+        ) : (
+          <ScrollView style={styles.remindersList}>
+            {reminders.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No reminders found</Text>
+                <Text style={styles.emptySubText}>Add a reminder to get started</Text>
               </View>
-              <TouchableOpacity style={styles.trashButton}>
-                <Ionicons name="trash-outline" size={20} color="#fff" />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </ScrollView>
+            ) : (
+              reminders.map((item) => (
+                <View key={item.id} style={styles.reminderItem}>
+                  <View style={styles.reminderContent}>
+                    <View style={styles.bellIconContainer}>
+                      <Ionicons name="notifications-outline" size={30} color="#fff" />
+                    </View>
+                    <View style={styles.reminderTextContainer}>
+                      <Text style={styles.reminderTitle}>{item.title}</Text>
+                      <Text style={styles.reminderDate}>Date - {formatDate(item.date)}</Text>
+                      <Text style={styles.reminderTime}>Time - {item.time}</Text>
+                      {item.description && item.description !== "No description" && (
+                        <Text style={styles.reminderDescription}>{item.description}</Text>
+                      )}
+                    </View>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.trashButton}
+                    onPress={() => handleDeleteReminder(item.id)}
+                  >
+                    <Ionicons name="trash-outline" size={20} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              ))
+            )}
+          </ScrollView>
+        )}
 
-        {/* Add Reminder Button */}
-        <TouchableOpacity style={styles.addButton}>
+        <TouchableOpacity 
+          style={styles.addButton} 
+          onPress={() => router.push('../(MainScreens)/addReminder')}
+        >
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>
@@ -80,11 +154,30 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 32,
-    color: '#C3FF65',
+    color: '#FF9D42',
     paddingHorizontal: 20,
     marginTop: 10,
     marginBottom: 20,
     fontFamily: 'Poppins_700Bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 18,
+    color: '#FFF',
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#AAA',
   },
   remindersList: {
     paddingHorizontal: 20,
@@ -94,7 +187,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginBottom: 15,
     overflow: 'hidden',
-    
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -127,6 +219,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#aaa',
     marginTop: 4,
+  },
+  reminderTime: {
+    fontSize: 12,
+    color: '#aaa',
+    marginTop: 2,
+  },
+  reminderDescription: {
+    fontSize: 12,
+    color: '#ddd',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   trashButton: {
     padding: 10,
