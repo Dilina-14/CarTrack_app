@@ -7,6 +7,9 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Location from 'expo-location';
+import { db, storage } from "@/firebaseAuth"; 
+import { collection, addDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface LocationData {
   name: string;
@@ -19,14 +22,15 @@ const AddNews = () => {
   const router = useRouter();
   const params = useLocalSearchParams<{ locationData?: string }>(); // Retrieve locationData from params
   const [title, setTitle] = useState('');
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(new Date());
   const [author, setAuthor] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [imageUri, setImageUri] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
   const [mapCoordinates, setMapCoordinates] = useState<{ latitude: number, longitude: number } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dateError, setDateError] = useState("");
 
   // Parse locationData from params
   useEffect(() => {
@@ -75,29 +79,22 @@ const AddNews = () => {
     }
   };
 
-  // Handle date change
-  const handleDateChange = (event: any, selected?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
-    if (selected) {
-      setSelectedDate(selected);
-      const day = selected.getDate();
-      const month = selected.toLocaleString('default', { month: 'long' });
-      const getOrdinalSuffix = (d: number) => {
-        if (d > 3 && d < 21) return 'th';
-        switch (d % 10) {
-          case 1: return 'st';
-          case 2: return 'nd';
-          case 3: return 'rd';
-          default: return 'th';
-        }
-      };
-      const formattedDate = `${day}${getOrdinalSuffix(day)} of ${month}`;
-      setDate(formattedDate);
-    }
-  };
+  // Handle date change - implementing from AddReminders.tsx
+  const handleDateChange = (event: any, selectedDate: Date | undefined) => {
+    const currentDate = selectedDate || date;
+    setShowDatePicker(false);
 
-  const showDatePickerModal = () => {
-    setShowDatePicker(true);
+    // Get the current date without time
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Check if the selected date is before the current date
+    if (currentDate < today) {
+      setDateError("Please select today or a future date.");
+    } else {
+      setDate(currentDate);
+      setDateError("");
+    }
   };
 
   const handleSelectLocation = async () => {
@@ -118,20 +115,90 @@ const AddNews = () => {
     }
   };
 
-  const handleSubmit = () => {
-    const newsData = {
-      title,
-      date,
-      author,
-      location,
-      description,
-      imageUri,
-      coordinates: mapCoordinates,
-    };
-    console.log("Submitting news:", newsData);
+  // Upload image to Firebase Storage
+  const uploadImage = async (uri: string) => {
+    if (!uri) return null;
     
-    // Use the router to navigate back to the main news screen
-    router.back();
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      
+      const filename = `news_images/${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const storageRef = ref(storage, filename);
+      
+      await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(storageRef);
+      
+      return downloadURL;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      return null;
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!title) {
+      alert('Please enter a title for the news');
+      return;
+    }
+
+    // Validate date using the new validation logic
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (date < today) {
+      setDateError("Please select today or a future date.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      // Upload image if one is selected
+      let imageUrl = null;
+      if (imageUri) {
+        imageUrl = await uploadImage(imageUri);
+      }
+      
+      // Format date for display
+      const day = date.getDate();
+      const month = date.toLocaleString('default', { month: 'long' });
+      const getOrdinalSuffix = (d: number) => {
+        if (d > 3 && d < 21) return 'th';
+        switch (d % 10) {
+          case 1: return 'st';
+          case 2: return 'nd';
+          case 3: return 'rd';
+          default: return 'th';
+        }
+      };
+      const formattedDate = `${day}${getOrdinalSuffix(day)} of ${month}`;
+      
+      // Create news object
+      const newsData = {
+        title,
+        date: formattedDate,
+        author,
+        location,
+        description,
+        imageUrl,
+        coordinates: mapCoordinates,
+        createdAt: new Date().toISOString(),
+      };
+      
+      // Add to Firestore
+      const docRef = await addDoc(collection(db, "news"), newsData);
+      console.log("Document written with ID: ", docRef.id);
+      
+      alert('News added successfully!');
+      
+      // Navigate back
+      router.back();
+    } catch (error) {
+      console.error("Error adding news:", error);
+      alert('Failed to add news. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -142,8 +209,8 @@ const AddNews = () => {
             <Feather name="arrow-left" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Add News</Text>
-          <TouchableOpacity onPress={handleSubmit}>
-            <Feather name="check" size={24} color="#A020F0" />
+          <TouchableOpacity onPress={handleSubmit} disabled={isSubmitting}>
+            <Feather name="check" size={24} color={isSubmitting ? "#666" : "#A020F0"} />
           </TouchableOpacity>
         </View>
 
@@ -170,29 +237,31 @@ const AddNews = () => {
             />
           </View>
 
+          {/* Date Input - Implemented from AddReminders.tsx */}
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Date</Text>
-            <TouchableOpacity onPress={showDatePickerModal}>
-              <View style={styles.datePickerButton}>
-                <TextInput
-                  style={styles.input}
-                  value={date}
-                  placeholder="Select date"
-                  placeholderTextColor="#666"
-                  editable={false}
-                />
-                <Feather name="calendar" size={20} color="#A020F0" style={styles.dateIcon} />
-              </View>
+            <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+              <TextInput
+                style={[styles.input, { borderColor: dateError ? "red" : "transparent" }]}
+                placeholder="Select date"
+                placeholderTextColor="#666"
+                value={date.toISOString().split('T')[0]}
+                editable={false}
+              />
             </TouchableOpacity>
             {showDatePicker && (
-              <DateTimePicker
-                testID="dateTimePicker"
-                value={selectedDate}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={handleDateChange}
-              />
+              <View style={styles.datePickerContainer}>
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display="spinner"
+                  onChange={handleDateChange}
+                  minimumDate={new Date()} // Prevent selecting past dates
+                  textColor={Platform.OS === 'ios' ? "#fff" : undefined}
+                />
+              </View>
             )}
+            {dateError ? <Text style={styles.errorText}>{dateError}</Text> : null}
           </View>
 
           <View style={styles.inputContainer}>
@@ -309,6 +378,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     color: 'white',
+    borderWidth: 1,
   },
   textArea: { 
     minHeight: 120,
@@ -316,13 +386,11 @@ const styles = StyleSheet.create({
     padding: 10,
     color: 'white',
   },
-  datePickerButton: {
-    position: 'relative',
-  },
-  dateIcon: {
-    position: 'absolute',
-    right: 12,
-    top: 10,
+  datePickerContainer: {
+    backgroundColor: '#1E1E1E',
+    borderRadius: 5,
+    overflow: 'hidden',
+    marginTop: 5,
   },
   locationContainer: {
     flexDirection: 'row',
@@ -345,5 +413,11 @@ const styles = StyleSheet.create({
     color: '#A020F0',
     fontSize: 12,
     marginTop: 4,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 8,
   },
 });
