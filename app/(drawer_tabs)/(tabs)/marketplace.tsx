@@ -13,6 +13,7 @@ import { Plus, SealCheck, Funnel, MagnifyingGlass } from "phosphor-react-native"
 import { useRouter } from "expo-router";
 import ScreenWrapper from '@/components/ScreenWrapper';
 import { getFirestore, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import TopBar from '@/components/TopBar';
 
 const ItemS_PER_PAGE = 8;
 
@@ -110,6 +111,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onFilter }) => {
   return (
     <ScreenWrapper>
       {/* Search Bar */}
+      <TopBar />
       <View style={styles.searchBarContainer}>
         <TextInput
           style={styles.searchInput}
