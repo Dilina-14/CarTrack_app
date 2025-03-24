@@ -15,10 +15,13 @@ import ScreenWrapper from '@/components/ScreenWrapper';
 import { getFirestore, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import TopBar from '@/components/TopBar';
 
-const ItemS_PER_PAGE = 8;
+const ItemS_PER_PAGE = 10; // Number of items per page
 
 const Marketplace = () => {
   interface Item {
+      seller: any;
+      fuelType: any;
+      transmission: any;
       id: string;
       imgUrl: string[];
       mileage: string;
@@ -30,9 +33,13 @@ const Marketplace = () => {
       model: string; // Added model property
       year: string;  // Added year property
       title: string; // Added title property
+      condition?: string; // Added condition property
+      bodyType?: string; // Added bodyType property
   }
 
   const [data, setData] = useState<Item[]>([]);
+  const [filteredData, setFilteredData] = useState<Item[]>([]); // For filtered results
+  const [searchText, setSearchText] = useState(''); // Search text state
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
@@ -41,14 +48,11 @@ const Marketplace = () => {
 
   useEffect(() => {
     fetchData();
-  }, [page]);
+  }, []);
 
-  // Helper function to get paginated data
-  const getPaginatedData = (): Item[] => {
-    const startIndex = (page - 1) * ItemS_PER_PAGE;
-    const endIndex = startIndex + ItemS_PER_PAGE;
-    return data.slice(startIndex, endIndex);
-  };
+  useEffect(() => {
+    handleSearch(searchText); // Trigger search whenever searchText changes
+  }, [searchText, data]);
 
   const fetchData = async () => {
     try {
@@ -74,6 +78,7 @@ const Marketplace = () => {
 
       console.log('Formatted Data:', formattedData); // Log the formatted data
       setData(formattedData);
+      setFilteredData(formattedData); // Initialize filtered data
       setTotalPages(Math.ceil(formattedData.length / ItemS_PER_PAGE));
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -83,51 +88,62 @@ const Marketplace = () => {
     }
   };
 
-  // SearchBar Component
-interface SearchBarProps {
-  onSearch: (text: string) => void;
-  onFilter: () => void;
-}
+  const handleSearch = (text: string) => {
+    setSearchText(text); // Update search text state
+    setPage(1); // Reset to the first page when searching
+  
+    if (text.trim() === '') {
+      setFilteredData(data); // Reset to all data if search text is empty
+      return;
+    }
+  
+    const lowercasedText = text.toLowerCase();
+    const filtered = data.filter((item) =>
+      item.brand.toLowerCase().includes(lowercasedText) ||
+      item.model.toLowerCase().includes(lowercasedText) ||
+      item.year.toLowerCase().includes(lowercasedText) ||
+      item.condition?.toLowerCase().includes(lowercasedText) || // Safely handle undefined condition
+      item.transmission.toLowerCase().includes(lowercasedText) ||
+      item.bodyType?.toLowerCase().includes(lowercasedText) ||
+      item.fuelType.toLowerCase().includes(lowercasedText) ||
+      item.location.toLowerCase().includes(lowercasedText) ||
+      (item.seller && item.seller.toLowerCase().includes(lowercasedText)) // Check seller if available
+    );
+  
+    setFilteredData(filtered);
+  };
 
-const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onFilter }) => {
-  return (
-    <View style={styles.searchBarContainer}>
-      <TouchableOpacity style={styles.filterButton} onPress={onFilter}>
-        <Funnel size={24} color="white" weight="bold" />
-      </TouchableOpacity>
-      <View style={styles.searchContainer}>
-        <TextInput
-          placeholder="Search"
-          placeholderTextColor="gray"
-          style={styles.input}
-          onChangeText={onSearch}  // Trigger search when typing
-        />
-        <MagnifyingGlass size={20} color="black" />
-      </View>
-    </View>
-  );
-};
-
+  const getPaginatedData = (): Item[] => {
+    const startIndex = (page - 1) * ItemS_PER_PAGE;
+    const endIndex = startIndex + ItemS_PER_PAGE;
+    return filteredData.slice(startIndex, endIndex);
+  };
 
   return (
     <ScreenWrapper>
-      
-      {/* Search Bar */}
-
       <TopBar />
       <Text style={styles.name}>Marketplace</Text>
+
+      {/* Search Bar */}
       <View style={styles.searchBarContainer}>
         <TextInput
           style={styles.searchInput}
           placeholder="Search for Items..."
           placeholderTextColor="#aaa"
+          value={searchText}
+          onChangeText={handleSearch} // Trigger search on text change
         />
         <TouchableOpacity style={styles.searchIconContainer}>
           <MagnifyingGlass size={24} color="#fff" />
         </TouchableOpacity>
       </View>
+
       {loading ? (
         <ActivityIndicator size="large" color="#45B1FF" />
+      ) : filteredData.length === 0 ? ( // Show "No results" message if no data is found
+        <View style={styles.noResultsContainer}>
+          <Text style={styles.noResultsText}>No results were found</Text>
+        </View>
       ) : (
         <>
           <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -142,7 +158,8 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onFilter }) => {
                   ]}
                   onPress={() => {
                     setSelectedItemId(item.id); // Set the selected item
-                    router.push(`/marketplace-display`);
+                    router.push(`/marketplace-display?id=${item.id}`); // Pass the custom `id` field
+                    console.log('Selected Item:', item); // Log the selected item
                   }}
                 >
                   <Image
@@ -382,6 +399,16 @@ const styles = StyleSheet.create({
   selectedItemContainer: {
     borderWidth: 2,
     borderColor: '#45B1FF',
+  },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  noResultsText: {
+    fontSize: 18,
+    color: '#ccc',
   },
 });
 

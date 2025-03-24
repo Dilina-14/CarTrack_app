@@ -11,9 +11,11 @@ import {
   KeyboardTypeOptions,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getAuth } from 'firebase/auth';
+import TopBar from '@/components/TopBar';
 
 const AddItem = () => {
   const [brand, setBrand] = useState('');
@@ -98,8 +100,27 @@ const AddItem = () => {
 
     const db = getFirestore();
     const storage = getStorage();
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      Alert.alert('Error', 'User is not logged in.');
+      return;
+    }
 
     try {
+      // Fetch the user's name from the `users` collection
+      const userDocRef = doc(db, 'users', currentUser.uid); // Assuming `uid` is the document ID in the `users` collection
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (!userDocSnap.exists()) {
+        Alert.alert('Error', 'User data not found.');
+        return;
+      }
+
+      const userData = userDocSnap.data();
+      const sellerName = userData.name; // Assuming `name` is the field in the `users` collection
+
       // Upload images to Firebase Storage
       const uploadedImageUrls: string[] = [];
       for (const [index, imageUri] of images.entries()) {
@@ -115,7 +136,7 @@ const AddItem = () => {
         uploadedImageUrls.push(downloadUrl);
       }
 
-      // Create the new item with the uploaded image URLs
+      // Create the new item with the uploaded image URLs and seller name
       const newItem = {
         brand,
         model,
@@ -132,6 +153,7 @@ const AddItem = () => {
         price,
         imgUrl: uploadedImageUrls, // Use the public URLs of the uploaded images
         date: new Date(), // Add the current date
+        seller: sellerName, // Add the seller's name
       };
 
       // Get the last ID from Firestore
@@ -161,7 +183,8 @@ const AddItem = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Add New Item</Text>
+        <TopBar/>
+      <Text style={styles.name}>Add New Item</Text>
 
       {/* Form Fields */}
       {[
@@ -219,6 +242,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 20,
+  },
+  name: {
+    fontSize: 30,
+    color: "#C3FF65",
+    fontWeight: "bold",
+    marginBottom: 0,
+    marginTop: -10,
+    paddingLeft: 30,
   },
   input: {
     backgroundColor: '#333',
