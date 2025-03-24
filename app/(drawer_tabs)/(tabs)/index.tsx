@@ -467,6 +467,7 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 24,
     color: colors.primary,
+    fontWeight: "bold",
     marginBottom: 20,
     paddingHorizontal: 20,
   },
