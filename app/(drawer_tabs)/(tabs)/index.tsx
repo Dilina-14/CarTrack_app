@@ -22,6 +22,7 @@ import {
   X,
   BellRinging,
   BellSimpleRinging,
+  Chat,
 } from "phosphor-react-native";
 import { colors } from "@/constants/theme";
 import { router } from "expo-router";
@@ -128,12 +129,13 @@ const HomeScreen = () => {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => router.push("../(tabs)/news")}>
+            <TouchableOpacity onPress={() => router.push("../../other/chatbot")}>
               <View style={[styles.iconContainer, { borderColor: "#A020F0" }]}>
-                <Newspaper size={43} color="#A020F0" weight="bold" />
-                <Text style={[styles.iconText, { color: "#A020F0" }]}>News</Text>
+                <Chat size={43} color="#A020F0" weight="bold" />
+                <Text style={[styles.iconText, { color: "#A020F0" }]}>Chat Bot</Text>
               </View>
             </TouchableOpacity>
+
           </ScrollView>
 
           <ExpenseGraph />
