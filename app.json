@@ -14,7 +14,8 @@
         "NSDocumentsDirectoryUsageDescription": "We need access to your documents directory to save files.",
         "NSPhotoLibraryUsageDescription": "We need access to your photo library to save files.",
         "NSPhotoLibraryAddUsageDescription": "We need access to your photo library to save files.",
-        "NSCameraUsageDescription": "We need access to your camera to take photos."
+        "NSCameraUsageDescription": "We need access to your camera to take photos.",
+        "NSRemindersUsageDescription": "We need access to your reminders to send you notifications."
       }
     },
     "android": {
@@ -26,8 +27,10 @@
       "permissions": [
         "WRITE_EXTERNAL_STORAGE",
         "READ_EXTERNAL_STORAGE",
-        "DOWNLOAD_WITHOUT_NOTIFICATION"
-      ]
+        "DOWNLOAD_WITHOUT_NOTIFICATION",
+        "POST_NOTIFICATIONS"
+      ],
+      "useNextNotificationsApi": true
     },
     "web": {
       "bundler": "metro",
@@ -48,11 +51,12 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/notification-icon.png",
-          "color": "#ffffff"
+          "icon": "./assets/images/icon.png",
+          "color": "#FF9D42",
+          "sounds": []
         }
       ],
-      "expo-media-library" 
+      "expo-media-library"
     ],
     "experiments": {
       "typedRoutes": true
