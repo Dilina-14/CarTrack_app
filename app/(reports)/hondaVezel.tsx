@@ -2,12 +2,17 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from 'expo-router';
+import { router } from "expo-router";
 
 const VehicleInfoScreen = () => {
   const navigation = useNavigation();
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+
+        <TouchableOpacity onPress={() => router.back()}>
+                    <Ionicons name="arrow-back" size={28} color="#fff" />
+                  </TouchableOpacity>
 
 
         <Text style={styles.header}>Vehicle Model Reports</Text>

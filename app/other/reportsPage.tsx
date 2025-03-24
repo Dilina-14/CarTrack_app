@@ -1,23 +1,220 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from '@react-navigation/native';
 import { Funnel, MagnifyingGlass } from "phosphor-react-native";
 import { colors } from '@/constants/theme';
 import { useRouter } from "expo-router";
+import { 
+  collection, 
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  onSnapshot,
+  increment,
+  arrayUnion,
+  arrayRemove
+} from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { db } from "@/firebaseAuth"; 
 
-const reportsPage = () => {
+// Define proper types for the report items
+interface ReportItem {
+  id: string;
+  title: string;
+  date: string;
+  liked: boolean;
+  likeCount: number;
+}
+
+// Define the Firestore document structure
+interface ReportDocument {
+  id: string;
+  title: string;
+  date: string;
+  likeCount: number;
+  likedBy: string[];
+}
+
+const ReportsPage = () => {
   const router = useRouter();
   const [isFilterModalVisible, setFilterModalVisible] = useState(false);
-  const [reminders, setReminders] = useState([
-    { id: '1', title: 'Honda Vezel', date: '20/10/2024' },
-    { id: '2', title: 'Bugatti Chiron', date: '01/10/2025' },
-    { id: '3', title: 'Mazda 6', date: '01/10/2025' },
-  ]);
-  const [filteredReminders, setFilteredReminders] = useState(reminders);
+  const [reminders, setReminders] = useState<ReportItem[]>([]);
+  const [filteredReminders, setFilteredReminders] = useState<ReportItem[]>([]);
+  const [userId, setUserId] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const navigation = useNavigation();
+  const auth = getAuth();
+
+  // Get current user ID from Firebase Auth
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in
+        const uid = user.uid;
+        setUserId(uid);
+        console.log("Current authenticated user ID:", uid);
+      } else {
+        // User is signed out, generate a temporary ID for demo purposes
+        // In a real app, you might want to redirect to login instead
+        const generateTempId = async () => {
+          try {
+            let tempId = await AsyncStorage.getItem('tempUserId');
+            if (!tempId) {
+              tempId = 'temp_' + Date.now().toString();
+              await AsyncStorage.setItem('tempUserId', tempId);
+            }
+            setUserId(tempId);
+            console.log("Using temporary user ID:", tempId);
+          } catch (error) {
+            console.error('Error generating temporary userId:', error);
+          }
+        };
+        generateTempId();
+      }
+    });
+
+    // Clean up the auth listener
+    return () => unsubscribe();
+  }, []);
+
+  // Load reports from Firebase and listen for real-time updates
+  useEffect(() => {
+    if (!userId) return;
+
+    const reportsRef = collection(db, 'vehicleReports');
+    
+    // Set up real-time listener
+    const unsubscribe = onSnapshot(reportsRef, (snapshot) => {
+      const reportsData: ReportItem[] = [];
+      
+      snapshot.forEach((doc) => {
+        const data = doc.data() as ReportDocument;
+        
+        // Check if THIS user has liked the report
+        const likedByCurrentUser = data.likedBy && data.likedBy.includes(userId);
+        
+        reportsData.push({
+          id: doc.id,
+          title: data.title,
+          date: data.date,
+          liked: likedByCurrentUser || false,
+          likeCount: data.likeCount || 0
+        });
+      });
+      
+      setReminders(reportsData);
+      setFilteredReminders(reportsData);
+    }, (error) => {
+      console.error("Error getting reports:", error);
+    });
+
+    // Clean up the listener when component unmounts
+    return () => unsubscribe();
+  }, [userId]);
+
+  // Search functionality
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredReminders(reminders);
+    } else {
+      const filtered = reminders.filter(item => 
+        item.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredReminders(filtered);
+    }
+  }, [searchQuery, reminders]);
+
+  // Initialize Firebase with sample data (only run once)
+  useEffect(() => {
+    const initializeFirebaseData = async () => {
+      try {
+        // Check if data already exists
+        const reportsRef = collection(db, 'vehicleReports');
+        const sampleReportRef = doc(reportsRef, '1');
+        const sampleReportDoc = await getDoc(sampleReportRef);
+        
+        if (!sampleReportDoc.exists()) {
+          // Initialize with sample data if it doesn't exist
+          const initialReports: ReportDocument[] = [
+            { id: '1', title: 'Honda Vezel', date: '20/10/2024', likeCount: 0, likedBy: [] },
+            { id: '2', title: 'Toyota Yaris', date: '01/10/2025', likeCount: 0, likedBy: [] },
+            { id: '3', title: 'Mazda 6', date: '01/10/2025', likeCount: 0, likedBy: [] },
+          ];
+          
+          for (const report of initialReports) {
+            await setDoc(doc(reportsRef, report.id), report);
+          }
+          console.log("Sample data initialized in Firestore");
+        }
+      } catch (error) {
+        console.error("Error initializing data:", error);
+      }
+    };
+    
+    initializeFirebaseData();
+  }, []);
+
+  // Handle like button click - update Firebase
+  const handleLike = async (id: string, isCurrentlyLiked: boolean) => {
+    if (!userId) {
+      console.log("Cannot like: No user ID available");
+      // You might want to redirect to login here
+      return;
+    }
+    
+    try {
+      const reportRef = doc(db, 'vehicleReports', id);
+      const reportDoc = await getDoc(reportRef);
+      
+      if (!reportDoc.exists()) {
+        console.error("Report document not found:", id);
+        return;
+      }
+      
+      const reportData = reportDoc.data() as ReportDocument;
+      const userLikedArray = reportData.likedBy || [];
+      const userHasLiked = userLikedArray.includes(userId);
+      
+      // If the UI state and actual Firestore state don't match, sync them
+      if (userHasLiked !== isCurrentlyLiked) {
+        console.warn("UI like state out of sync with Firestore. Syncing...");
+        isCurrentlyLiked = userHasLiked;
+      }
+      
+      if (isCurrentlyLiked) {
+        // User is unliking the report
+        await updateDoc(reportRef, {
+          likeCount: increment(-1),
+          likedBy: arrayRemove(userId)
+        });
+        console.log(`User ${userId} removed like from report ${id}`);
+      } else {
+        // User is liking the report
+        await updateDoc(reportRef, {
+          likeCount: increment(1),
+          likedBy: arrayUnion(userId)
+        });
+        console.log(`User ${userId} added like to report ${id}`);
+      }
+    } catch (error) {
+      console.error("Error updating like:", error);
+    }
+  };
+
+  // Function to clear user ID (for testing)
+  const clearUserIdForTesting = async () => {
+    try {
+      await AsyncStorage.removeItem('tempUserId');
+      alert('User ID cleared! Restart the app to get a new ID.');
+    } catch (error) {
+      console.error('Error clearing user ID:', error);
+    }
+  };
 
   // Filter modal component
   const FilterModal = () => (
@@ -74,6 +271,15 @@ const reportsPage = () => {
           >
             <Text style={styles.filterOptionText}>Newest First</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.filterOptionButton}
+            onPress={() => {
+              setFilteredReminders([...reminders].sort((a, b) => b.likeCount - a.likeCount));
+              setFilterModalVisible(false);
+            }}
+          >
+            <Text style={styles.filterOptionText}>Most Liked</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.closeButton} onPress={() => setFilterModalVisible(false)}>
             <Text style={styles.closeButtonText}>Close</Text>
           </TouchableOpacity>
@@ -85,7 +291,12 @@ const reportsPage = () => {
   return (
     <ScreenWrapper>
       <View style={styles.container}>
-        <View style={styles.headerContainer}></View>
+        <View style={styles.headerContainer}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={28} color="#fff" />
+          </TouchableOpacity>
+          
+        </View>
         <Text style={styles.header}>Vehicle Model Reports</Text>
 
         <View style={styles.searchBarContainer}>
@@ -97,6 +308,8 @@ const reportsPage = () => {
               placeholder="Search"
               placeholderTextColor="gray"
               style={styles.input}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
             />
             <MagnifyingGlass size={20} color="black" />
           </View>
@@ -105,7 +318,18 @@ const reportsPage = () => {
         <ScrollView style={styles.remindersList}>
           {filteredReminders.map((item) => (
             <View key={item.id} style={styles.reminderItem}>
-              <TouchableOpacity style={styles.reminderContent} onPress={() => router.push("/other/reports")}>
+              <TouchableOpacity
+                style={styles.reminderContent}
+                onPress={() => {
+                  if (item.id === '1') {
+                    router.push("/(reports)/hondaVezel"); // Navigate to Honda Vezel screen
+                  } else if (item.id === '2') {
+                    router.push("/(reports)/toyotaYarisScreen"); // Navigate to Toyota Yaris screen
+                  } else if (item.id === '3') {
+                    router.push("/(reports)/mazda6Screen"); // Navigate to Mazda 6 screen
+                  }
+                }}
+              >
                 <View style={styles.bellIconContainer}>
                   <Ionicons name="document-outline" size={30} color="#fff" />
                 </View>
@@ -114,9 +338,16 @@ const reportsPage = () => {
                   <Text style={styles.reminderDate}>Uploaded Date - {item.date}</Text>
                 </View>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.trashButton}>
-                <Ionicons name="heart-outline" size={20} color="#fff" />
-                <Text style={styles.heartCount}>69</Text>
+              <TouchableOpacity 
+                style={styles.likeButton} 
+                onPress={() => handleLike(item.id, item.liked)}
+              >
+                <Ionicons 
+                  name={item.liked ? "heart" : "heart-outline"} 
+                  size={20} 
+                  color={item.liked ? "red" : "#fff"} 
+                />
+                <Text style={styles.heartCount}>{item.likeCount}</Text>
               </TouchableOpacity>
             </View>
           ))}
@@ -128,7 +359,7 @@ const reportsPage = () => {
   );
 };
 
-export default reportsPage;
+export default ReportsPage;
 
 const styles = StyleSheet.create({
   container: {
@@ -137,6 +368,9 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 20,
   },
@@ -145,8 +379,24 @@ const styles = StyleSheet.create({
     color: '#C3FF65',
     paddingHorizontal: 20,
     marginTop: 10,
-    marginBottom: 20,
+    marginBottom: 5,
     fontFamily: 'monospace',
+  },
+  userIdText: {
+    fontSize: 12,
+    color: '#999',
+    paddingHorizontal: 20,
+    marginBottom: 15,
+  },
+  testButton: {
+    backgroundColor: '#333',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+  testButtonText: {
+    color: '#fff',
+    fontSize: 12,
   },
   remindersList: {
     paddingHorizontal: 20,
@@ -183,6 +433,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+    marginLeft: 5,
   },
   reminderTitle: {
     fontSize: 16,
@@ -194,8 +445,10 @@ const styles = StyleSheet.create({
     color: '#aaa',
     marginTop: 4,
   },
-  trashButton: {
+  likeButton: {
     padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   searchBarContainer: {
     flexDirection: "row",
@@ -243,7 +496,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    color: '#C3FF65', // Updated to match LegalSupportScreen
+    color: '#C3FF65',
     fontWeight: 'bold',
     marginBottom: 15,
   },
@@ -252,15 +505,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#333', // Updated to match LegalSupportScreen
+    borderBottomColor: '#333',
   },
   filterOptionText: {
     fontSize: 16,
-    color: '#fff', // Updated to match LegalSupportScreen
+    color: '#fff',
   },
   closeButton: {
     marginTop: 20,
-    backgroundColor: '#333', // Updated to match LegalSupportScreen
+    backgroundColor: '#333',
     padding: 14,
     borderRadius: 10,
     width: '100%',
@@ -268,7 +521,7 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     fontSize: 16,
-    color: '#fff', // Updated to match LegalSupportScreen
+    color: '#fff',
     fontWeight: '600',
   },
 });
