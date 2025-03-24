@@ -83,7 +83,7 @@ const Reminders = () => {
     <ScreenWrapper>
       <View style={styles.container}>
         <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.push('/(drawer_tabs)/(tabs)')}>
             <Ionicons name="arrow-back" size={28} color="#fff" />
           </TouchableOpacity>
         </View>
