@@ -212,7 +212,7 @@ const Profile = () => {
 
             <TouchableOpacity
               style={[styles.menuItem, { width: menuWidth }]}
-              onPress={() => router.push('../other/reminders')}
+              onPress={() => router.push('/other/reminders')}
             >
               <Image source={require('../../assets/images/reminders-icon.png')} />
               <Text style={[styles.menuText, { fontSize: fontSize }]}>Reminders</Text>
