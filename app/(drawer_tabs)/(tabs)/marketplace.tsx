@@ -201,7 +201,7 @@ const Marketplace = () => {
             style={styles.floatingButton}
             onPress={() => router.push('/addItem')} // Navigate to the addItem page
           >
-            <Plus size={32} color="#fff" weight="bold" /> {/* Plus Icon */}
+            <Plus size={32} color="#121212" weight="bold" /> {/* Plus Icon */}
           </TouchableOpacity>
         </>
       )}
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#74B520',
+    backgroundColor: '#C6FF66',
     justifyContent: 'center',
     alignItems: 'center',
   },
