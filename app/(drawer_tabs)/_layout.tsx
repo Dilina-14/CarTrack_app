@@ -32,7 +32,6 @@ const CustomDrawerContent = (props: DrawerContentComponentProps) => {
     { id: 'profile', icon: 'person', label: 'Profile', screen: '/(drawer_tabs)/profile' },
     { id: 'chatbot', icon: 'chatbubble', label: 'ChatBot', screen: '/other/chatbot' },
     { id: 'logout', icon: 'log-out-outline', label: 'Logout', screen: '/(auth)/login' },
-    
   ];
 
   const handleMenuItemPress = (item: MenuItem) => {
@@ -52,6 +51,9 @@ const CustomDrawerContent = (props: DrawerContentComponentProps) => {
       <View style={styles.header}>
         <Text style={styles.title}>Menu</Text>
       </View>
+
+      {/* Separator Bar */}
+      <View style={styles.separator} />
 
       <ScrollView style={styles.menuList}>
         {menuItems.map((item) => (
@@ -136,7 +138,6 @@ export default function Layout() {
             title: "Logout",
           }}
         />
-        
       </Drawer>
     </GestureHandlerRootView>
   );
@@ -148,19 +149,28 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     width: '80%',
-    justifyContent: 'space-between', // Align items vertically
+    justifyContent: 'space-between',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24,
-    paddingTop: 40, // Add more padding at the top for status bar
+    paddingTop: 40, //
   },
   title: {
-    color: '#fff',
-    fontSize: 24,
-    
+    color: 'rgba(179, 255, 98, 0.92)',
+    fontSize: 28, 
+    fontWeight: 'bold', 
+    textShadowColor: 'rgba(0, 0, 0, 0.3)', 
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+    marginLeft: 15, // 
+  },
+  separator: {
+    height: 1, // Thin bar
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', 
+    marginBottom: 16,
   },
   menuList: {
     flex: 1,
@@ -193,5 +203,5 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#121212',
     paddingTop: 20,
-  }
+  },
 });
