@@ -2,19 +2,88 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { router } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage'; // ✅ CHANGED
+
+import { getAuth } from "firebase/auth";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { app } from "../../firebaseAuth"; 
 
 const AddCost = () => {
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState("Fuel");
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dateBorderColor, setDateBorderColor] = useState("#FFF");
   const [amountBorderColor, setAmountBorderColor] = useState("#FFF");
   const [noteBorderColor, setNoteBorderColor] = useState("#FFF");
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState(""); // ✅ CHANGED (Added state for note)
+  const [errors, setErrors] = useState({ date: "", amount: "" });
 
   const handleDateChange = (event: any, selectedDate: Date | undefined) => {
     const currentDate = selectedDate || date;
     setShowDatePicker(false);
     setDate(currentDate);
+    setErrors((prev) => ({ ...prev, date: "" }));
+  };
+
+  const handleSave = async () => {
+    let hasError = false;
+    const newErrors = { date: "", amount: "" };
+  
+    if (!date) {
+      newErrors.date = "Date is required.";
+      setDateBorderColor("red");
+      hasError = true;
+    }
+  
+    if (!amount) {
+      newErrors.amount = "Amount is required.";
+      setAmountBorderColor("red");
+      hasError = true;
+    }
+  
+    if (isNaN(Number(amount)) || Number(amount) <= 0) {
+      newErrors.amount = "Enter a valid amount.";
+      setAmountBorderColor("red");
+      hasError = true;
+    }
+  
+    setErrors(newErrors);
+  
+    if (!hasError) {
+      try {
+        // Get the current user's ID
+        const auth = getAuth();
+        const user = auth.currentUser;
+        const userId = user?.uid;
+  
+        if (!userId) {
+          throw new Error("User not authenticated");
+        }
+  
+        // Prepare expense data
+        const expenseData = {
+          category,
+          date: date.toISOString().split('T')[0],
+          amount: parseFloat(amount),
+          note: note.trim() === "" ? "No description" : note.trim(),
+          userId, // Associate the expense with the user's ID
+        };
+  
+        // Save to Firestore
+        const db = getFirestore(app);
+        const expensesRef = collection(db, "expenses");
+        await addDoc(expensesRef, expenseData);
+  
+        console.log("Expense saved to Firestore!");
+  
+        // Navigate to the index in tabs
+        router.push("../(tabs)");
+      } catch (error) {
+        console.error("Error saving expense:", error);
+      }
+    }
   };
 
   return (
@@ -33,7 +102,7 @@ const AddCost = () => {
               value={date.toISOString().split('T')[0]}
               editable={false}
               onFocus={() => setDateBorderColor("#C3FF65")}
-              onBlur={() => setDateBorderColor("#FFF")}
+              onBlur={() => setDateBorderColor(errors.date ? "red" : "#FFF")}
             />
           </TouchableOpacity>
           {showDatePicker && (
@@ -43,10 +112,11 @@ const AddCost = () => {
                 mode="date"
                 display="spinner"
                 onChange={handleDateChange}
-                textColor="#FFF" // Set text color to white
+                textColor="#FFF"
               />
             </View>
           )}
+          {errors.date ? <Text style={styles.errorText}>{errors.date}</Text> : null}
         </View>
 
         {/* Amount Input */}
@@ -57,26 +127,33 @@ const AddCost = () => {
             placeholder="Enter amount"
             placeholderTextColor="#777"
             keyboardType="numeric"
+            value={amount}
+            onChangeText={(text) => {
+              setAmount(text);
+              setErrors((prev) => ({ ...prev, amount: "" }));
+            }}
             onFocus={() => setAmountBorderColor("#C3FF65")}
-            onBlur={() => setAmountBorderColor("#FFF")}
+            onBlur={() => setAmountBorderColor(errors.amount ? "red" : "#FFF")}
           />
+          {errors.amount ? <Text style={styles.errorText}>{errors.amount}</Text> : null}
         </View>
 
         {/* Category Picker */}
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Category</Text>
-          <View style={[styles.input, {borderColor: '#FFF'},{ padding: 0 }]}>
+          <View style={[styles.input, { borderColor: '#FFF' }, { padding: 0 }]}>
             <Picker
               selectedValue={category}
               onValueChange={(itemValue) => setCategory(itemValue)}
-              style={{ height: 55, color: "#FFF" ,borderRadius: 20,}}
+              style={{ height: 55, color: "#FFF", borderRadius: 20 }}
               dropdownIconColor="#FFF"
               itemStyle={styles.pickerItem}
             >
-              <Picker.Item label="Fuel (Default)" value="fuel"  />
-              <Picker.Item label="Maintenance" value="maintenance" />
-              <Picker.Item label="Insurance" value="insurance" />
-              <Picker.Item label="Other" value="other" />
+              <Picker.Item label="Fuel (Default)" value="Fuel" />
+              <Picker.Item label="Maintenance" value="Maintenance" />
+              <Picker.Item label="Insurance" value="Insurance" />
+              <Picker.Item label="Repair" value="Repair" />
+              <Picker.Item label="Other" value="Other" />
             </Picker>
           </View>
         </View>
@@ -85,10 +162,12 @@ const AddCost = () => {
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Note</Text>
           <TextInput
-            style={[styles.input, { borderColor: noteBorderColor, }]} // Increased height
+            style={[styles.input, { borderColor: noteBorderColor }]}
             placeholder="Enter note"
             placeholderTextColor="#777"
             multiline
+            value={note}
+            onChangeText={setNote}
             onFocus={() => setNoteBorderColor("#C3FF65")}
             onBlur={() => setNoteBorderColor("#FFF")}
           />
@@ -97,10 +176,10 @@ const AddCost = () => {
 
       {/* Buttons */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.cancelButton}>
+        <TouchableOpacity onPress={() => router.push("../(tabs)")} style={styles.cancelButton}>
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.saveButton}>
+        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
           <Text style={styles.saveText}>Save</Text>
         </TouchableOpacity>
       </View>
@@ -117,7 +196,7 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     padding: 20,
-    paddingBottom: 100, 
+    paddingBottom: 100,
   },
   title: {
     fontSize: 30,
@@ -148,20 +227,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
   },
-  pickerItem: { 
-    backgroundColor: "#1E1E1E", 
-    color: "#1E1E1E", 
-    borderRadius: 25, 
+  pickerItem: {
+    backgroundColor: "#1E1E1E",
+    color: "#1E1E1E",
+    borderRadius: 25,
   },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 20,
-    borderWidth: 1,
-    borderColor: "#121212",
-    backgroundColor: "#121212",
-    marginLeft: 25,
-    marginRight: 25,
   },
   cancelButton: {
     borderWidth: 1,
@@ -184,5 +258,11 @@ const styles = StyleSheet.create({
     color: "#121212",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 8,
   },
 });

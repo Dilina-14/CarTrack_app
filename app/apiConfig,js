@@ -1,0 +1,24 @@
+// api.config.js
+import { Platform } from 'react-native';
+
+let BASE_URL;
+
+if (Platform.OS === 'android') {
+  // For Android emulator
+  BASE_URL = 'http://10.0.2.2:5000/api';
+} else if (Platform.OS === 'ios') {
+  // For iOS simulator
+  BASE_URL = 'http://localhost:5000/api';
+} else {
+  // For physical devices, use your computer's actual IP address
+  BASE_URL = 'http://192.168.1.x:5000/api'; // Replace with your actual IP
+}
+
+export default {
+  BASE_URL,
+  AUTH: {
+    LOGIN: `${BASE_URL}/auth/login`,
+    // other auth endpoints
+  },
+  // other API endpoints
+};
