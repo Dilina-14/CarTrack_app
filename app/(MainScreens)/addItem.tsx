@@ -237,19 +237,13 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#121212',
   },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 20,
-  },
   name: {
     fontSize: 30,
     color: "#C3FF65",
     fontWeight: "bold",
-    marginBottom: 0,
+    marginBottom: 20,
     marginTop: -10,
-    paddingLeft: 30,
+    paddingLeft: 5,
   },
   input: {
     backgroundColor: '#333',

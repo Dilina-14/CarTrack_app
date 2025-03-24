@@ -7,41 +7,43 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  TextInput
+  TextInput,
+  RefreshControl, // Import RefreshControl
 } from 'react-native';
-import { Plus, SealCheck, Funnel, MagnifyingGlass } from "phosphor-react-native"; // Import the Plus, SealCheck, Funnel, and MagnifyingGlass icons
+import { Plus, SealCheck, MagnifyingGlass } from "phosphor-react-native";
 import { useRouter } from "expo-router";
 import ScreenWrapper from '@/components/ScreenWrapper';
-import { getFirestore, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, query, orderBy } from 'firebase/firestore';
 import TopBar from '@/components/TopBar';
 
-const ItemS_PER_PAGE = 10; // Number of items per page
+const ItemS_PER_PAGE = 10;
 
 const Marketplace = () => {
   interface Item {
-      seller: any;
-      fuelType: any;
-      transmission: any;
-      id: string;
-      imgUrl: string[];
-      mileage: string;
-      location: string;
-      price: string;
-      verified: boolean;
-      daysAgo: number;
-      brand: string; // Added brand property
-      model: string; // Added model property
-      year: string;  // Added year property
-      title: string; // Added title property
-      condition?: string; // Added condition property
-      bodyType?: string; // Added bodyType property
+    seller: any;
+    fuelType: any;
+    transmission: any;
+    id: string;
+    imgUrl: string[];
+    mileage: string;
+    location: string;
+    price: string;
+    verified: boolean;
+    daysAgo: number;
+    brand: string;
+    model: string;
+    year: string;
+    title: string;
+    condition?: string;
+    bodyType?: string;
   }
 
   const [data, setData] = useState<Item[]>([]);
-  const [filteredData, setFilteredData] = useState<Item[]>([]); // For filtered results
-  const [searchText, setSearchText] = useState(''); // Search text state
+  const [filteredData, setFilteredData] = useState<Item[]>([]);
+  const [searchText, setSearchText] = useState('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false); // State for pull-to-refresh
   const [totalPages, setTotalPages] = useState(1);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const router = useRouter();
@@ -51,7 +53,7 @@ const Marketplace = () => {
   }, []);
 
   useEffect(() => {
-    handleSearch(searchText); // Trigger search whenever searchText changes
+    handleSearch(searchText);
   }, [searchText, data]);
 
   const fetchData = async () => {
@@ -64,12 +66,24 @@ const Marketplace = () => {
       const q = query(marketplaceCollection, orderBy('id', 'asc'));
       const snapshot = await getDocs(q);
 
-      const result: Item[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Item[];
+      const result: Item[] = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        const listedDate = data.date?.toDate(); // Convert Firestore timestamp to JavaScript Date
+        const today = new Date();
 
-      console.log('Fetched Data:', result); // Log the fetched data
+        // Calculate the difference in days
+        const daysAgo = listedDate
+          ? Math.floor((today.getTime() - listedDate.getTime()) / (1000 * 60 * 60 * 24))
+          : 0;
+
+        return {
+          id: doc.id,
+          ...data,
+          daysAgo,
+        };
+      }) as Item[];
+
+      console.log('Fetched Data:', result);
 
       const formattedData = result.map((item: Item) => ({
         ...item,
@@ -119,6 +133,12 @@ const Marketplace = () => {
     return filteredData.slice(startIndex, endIndex);
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
+
   return (
     <ScreenWrapper>
       <TopBar />
@@ -146,7 +166,12 @@ const Marketplace = () => {
         </View>
       ) : (
         <>
-          <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ScrollView 
+            contentContainerStyle={styles.scrollContent}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          >
             {getPaginatedData().map((item) => {
               console.log('Rendering Item:', item); // Log each item being rendered
               return (
@@ -172,7 +197,9 @@ const Marketplace = () => {
                     <Text style={styles.title}>{item.title || 'No Title Available'}</Text>
                     <Text style={styles.mileage}>{item.mileage ? `${item.mileage} km` : 'N/A'}</Text>
                     <Text style={styles.location}>{item.location || 'Unknown Location'}</Text>
-                    <Text style={styles.price}>{item.price ? `LKR ${item.price}` : 'Price Not Available'}</Text>
+                    <Text style={styles.price}>
+                      {item.price ? `LKR ${Number(item.price).toLocaleString('en-US')}` : 'Price Not Available'}
+                    </Text>
                     {item.verified && (
                       <View style={styles.verifiedContainer}>
                         <SealCheck size={16} color="#45B1FF" weight="fill" />

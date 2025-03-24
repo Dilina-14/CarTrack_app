@@ -173,7 +173,9 @@ const MarketplaceDisplay = () => {
           {/* Vehicle Info */}
           <View style={styles.infoContainer}>
             <Text style={styles.title}>{vehicleData.name}</Text>
-            <Text style={styles.price}>{vehicleData.price}</Text>
+            <Text style={styles.price}>
+                {vehicleData.price ? `Rs ${Number(vehicleData.price.replace(/\D/g, '')).toLocaleString('en-US')}` : 'Price Not Available'}
+            </Text>
             <Text style={styles.distance}>{vehicleData.distance}</Text>
             <Text style={styles.sellerText}>
               Seller: {vehicleData.seller}
