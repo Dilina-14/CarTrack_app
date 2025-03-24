@@ -1,10 +1,21 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Platform, Alert } from "react-native";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from "expo-router";
 import { getAuth } from "firebase/auth";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
 import { app } from "../../firebaseAuth";
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+
+// Configure notifications behavior
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 const AddReminder = () => {
   const [title, setTitle] = useState<string>("");
@@ -15,6 +26,21 @@ const AddReminder = () => {
   const [description, setDescription] = useState<string>("");
   const [errors, setErrors] = useState<{ title: string; date: string; time: string }>({ title: "", date: "", time: "" });
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [hasNotificationPermission, setHasNotificationPermission] = useState<boolean>(false);
+
+  // Request notification permissions on component mount
+  useEffect(() => {
+    registerForPushNotificationsAsync().then(permission => {
+      setHasNotificationPermission(permission);
+      if (!permission) {
+        Alert.alert(
+          "Permission Required",
+          "To receive reminder notifications, please enable notifications for this app in your device settings.",
+          [{ text: "OK" }]
+        );
+      }
+    });
+  }, []);
 
   const handleDateChange = (event: any, selectedDate: Date | undefined) => {
     const currentDate = selectedDate || date;
@@ -47,6 +73,35 @@ const AddReminder = () => {
     } else {
       setTime(currentTime);
       setErrors((prev) => ({ ...prev, time: "" }));
+    }
+  };
+
+  // Schedule a notification for the reminder
+  const scheduleNotification = async (title: string, body: string, triggerDate: Date): Promise<string> => {
+    if (!hasNotificationPermission) {
+      console.log("No notification permission");
+      return "";
+    }
+
+    try {
+      const notificationId = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: title,
+          body: body,
+          sound: true,
+          priority: Notifications.AndroidNotificationPriority.HIGH,
+        },
+        trigger: {
+          seconds: Math.floor((triggerDate.getTime() - Date.now()) / 1000),
+          channelId: 'reminders',
+        },
+      });
+      
+      console.log("Notification scheduled for:", triggerDate, "ID:", notificationId);
+      return notificationId;
+    } catch (error) {
+      console.error("Error scheduling notification:", error);
+      return "";
     }
   };
 
@@ -88,6 +143,19 @@ const AddReminder = () => {
           throw new Error("User not authenticated");
         }
 
+        // Create a date object for the reminder's scheduled time
+        const reminderDateTime = new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate(),
+          time.getHours(),
+          time.getMinutes()
+        );
+
+        // Schedule the notification
+        const notificationBody = description.trim() === "" ? "Time for your reminder!" : description.trim();
+        const notificationId = await scheduleNotification(title, notificationBody, reminderDateTime);
+
         // Prepare reminder data
         const reminderData = {
           title,
@@ -95,6 +163,8 @@ const AddReminder = () => {
           time: time.toLocaleTimeString(),
           description: description.trim() === "" ? "No description" : description.trim(),
           userId, // Associate the reminder with the user's ID
+          notificationId, // Store notification ID for potential cancellation
+          reminderDateTime: reminderDateTime.toISOString(), // Store the exact date and time
         };
 
         // Save to Firestore
@@ -107,11 +177,42 @@ const AddReminder = () => {
         router.push("../other/reminders");
       } catch (error) {
         console.error("Error saving reminder:", error);
+        Alert.alert("Error", "Failed to save reminder. Please try again.");
       } finally {
         setIsSaving(false);
       }
     }
   };
+
+  // Function to request notification permissions
+  async function registerForPushNotificationsAsync() {
+    let permissionStatus = false;
+    
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('reminders', {
+        name: 'Reminders',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF9D42',
+      });
+    }
+
+    if (Device.isDevice) {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      
+      permissionStatus = finalStatus === 'granted';
+    } else {
+      console.log('Must be using a physical device for notifications');
+    }
+
+    return permissionStatus;
+  }
 
   return (
     <View style={styles.container}>
@@ -199,6 +300,14 @@ const AddReminder = () => {
             onChangeText={setDescription}
           />
         </View>
+
+        {!hasNotificationPermission && (
+          <View style={styles.warningContainer}>
+            <Text style={styles.warningText}>
+              Notifications are disabled. Reminders will be saved but you won't receive notifications.
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       {/* Buttons */}
@@ -298,5 +407,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 5,
     marginLeft: 8,
+  },
+  warningContainer: {
+    backgroundColor: "rgba(255, 157, 66, 0.2)",
+    padding: 15,
+    borderRadius: 10,
+    marginHorizontal: 30,
+    marginVertical: 10,
+  },
+  warningText: {
+    color: "#FF9D42",
+    fontSize: 14,
+    textAlign: "center",
   },
 });
